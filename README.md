@@ -41,6 +41,8 @@ The HLV Flight Middleware project aims to advance safety, transparency, and pred
 
 Recursive Autonomous Projection System (RAPS) Foundational Document and PART II: Helix-Light-Vortex Physics Math Implementation: https://dfeen.substack.com/p/ai-augmented-rigor-a-zero-trust-governance
 
+A Unified Field and Engineering Framework: Gaussian Vacuum Solitons, Spiral-Time HLV Dynamics, and the RAPS Coherence Architecture Preprint: https://zenodo.org/records/17848351
+
 By releasing this under the MIT license, the project encourages contributions, forks, audits, and collaborations. Special acknowledgment is owed to Marcel Krüger for providing the theoretical breakthroughs that inspired this implementation.
 
 For inquiries, collaborations, or discussion, contact Don Michael Feeney Jr. at dfeen87@gmail.com .
