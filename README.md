@@ -39,6 +39,8 @@ Source Code: The repository includes the full 3600-line C++ implementation (hlv_
 
 The HLV Flight Middleware project aims to advance safety, transparency, and predictive intelligence in aerospace systems. Modern aircraft operate under variable conditions with components subject to thermal stress, mechanical fatigue, and emergent instability patterns. HLV provides a new mathematical foundation to model these phenomena and transform how engineers predict and manage aircraft health.
 
+The RAPS Document: https://dfeen.substack.com/p/the-engineering-bridge-integrating
+
 By releasing this under the MIT license, the project encourages contributions, forks, audits, and collaborations. Special acknowledgment is owed to Marcel Krüger for providing the theoretical breakthroughs that inspired this implementation.
 
 For inquiries, collaborations, or discussion, contact Don Michael Feeney Jr. at dfeen87@gmail.com .
