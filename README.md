@@ -39,7 +39,8 @@ Source Code: The repository includes the full 3600-line C++ implementation (hlv_
 
 The HLV Flight Middleware project aims to advance safety, transparency, and predictive intelligence in aerospace systems. Modern aircraft operate under variable conditions with components subject to thermal stress, mechanical fatigue, and emergent instability patterns. HLV provides a new mathematical foundation to model these phenomena and transform how engineers predict and manage aircraft health.
 
-The RAPS Document: https://dfeen.substack.com/p/ai-augmented-rigor-a-zero-trust-governance
+Recursive Autonomous Projection System (RAPS) Foundational Document and PART II: Helix-Light-Vortex Physics Math Implementation 
+Recursive Autonomous Projection System (RAPS) Foundational Document and PART II: Helix-Light-Vortex Physics Math Implementation: https://dfeen.substack.com/p/ai-augmented-rigor-a-zero-trust-governance
 
 By releasing this under the MIT license, the project encourages contributions, forks, audits, and collaborations. Special acknowledgment is owed to Marcel Krüger for providing the theoretical breakthroughs that inspired this implementation.
 
