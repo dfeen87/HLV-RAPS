@@ -1,5 +1,5 @@
-#ifndef HLV_PDT_ENGINE_HPP
-#define HLV_PDT_ENGINE_HPP
+#ifndef HLV_FIELD_DYNAMICS_HPP
+#define HLV_FIELD_DYNAMICS_HPP
 
 #include <vector>
 #include <array>
@@ -259,4 +259,5 @@ private:
     std::mt19937 rng_;
 };
 
-#endif // HLV_PDT_ENGINE_HPP
+#endif // HLV_FIELD_DYNAMICS_HPP
+
