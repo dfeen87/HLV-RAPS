@@ -1,7 +1,7 @@
-# HLV Flight Middleware
+# RAPS-HLV Flight Middleware
 **Advanced Safety & Predictive Intelligence Layer for Flight-Ready Systems**
 
-Powered by the **Helix–Light–Vortex (HLV)** U₂→U₁ coupling concept  
+Powered by the **Helix–Light–Vortex (HLV)**
 **Authors:** Don Michael Feeney Jr. & Marcel Krüger  
 **License:** MIT
 
