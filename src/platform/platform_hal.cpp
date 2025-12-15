@@ -1,205 +1,239 @@
+// ============================================================
+// PlatformHAL — Host/SIL implementation
+// - Deterministic-friendly RNG stubs
+// - Fault injection hooks (compile-time gated)
+// - Idempotent actuator execution
+// - CI-friendly, no external deps
+// ============================================================
+
 #include "platform/platform_hal.hpp"
 
 #include <algorithm>
+#include <array>
 #include <chrono>
+#include <cstdint>
 #include <cstring>
 #include <iomanip>
 #include <mutex>
 #include <random>
 #include <sstream>
 #include <string>
+#include <unordered_set>
 
+// ------------------------------------------------------------
 // Static members
+// ------------------------------------------------------------
+
 std::mt19937_64 PlatformHAL::rng_;
 bool PlatformHAL::rng_seeded_ = false;
 
-#ifdef RAPS_ENABLE_SIL_FAULTS
+// ------------------------------------------------------------
+// Internal helpers (SIL fault injection)
+// ------------------------------------------------------------
+
 namespace {
-std::mutex g_sil_fault_mutex;
-PlatformHAL::SilFaultConfig g_sil_fault_cfg{};
+
+struct FaultConfig {
+    // Probabilities in [0, 1]
+    float flash_write_fail_prob = 0.005f;   // 0.5%
+    float flash_read_fail_prob  = 0.001f;   // 0.1%
+    float downlink_fail_prob    = 0.001f;   // 0.1%
+    float actuator_fail_prob    = 0.002f;   // 0.2%
+
+    // Latency model for actuator_execute
+    float actuator_latency_min_s = 0.003f;
+    float actuator_latency_max_s = 0.020f;
+};
+
+FaultConfig& fault_cfg() {
+    static FaultConfig cfg{};
+    return cfg;
 }
+
+std::mutex& hal_mutex() {
+    static std::mutex m;
+    return m;
+}
+
+std::unordered_set<std::string>& applied_tx_ids() {
+    static std::unordered_set<std::string> s;
+    return s;
+}
+
+bool rng_ready() {
+    return PlatformHAL::random_float(0.0f, 1.0f) >= 0.0f; // forces seed in random_float()
+}
+
+bool should_fail(float prob) {
+#if defined(RAPS_ENABLE_SIL_FAULTS) && (RAPS_ENABLE_SIL_FAULTS == 1)
+    if (prob <= 0.0f) return false;
+    if (prob >= 1.0f) return true;
+    float r = PlatformHAL::random_float(0.0f, 1.0f);
+    return r < prob;
+#else
+    (void)prob;
+    return false;
 #endif
-
-// -----------------------------------------------------------------------------
-// Time
-// -----------------------------------------------------------------------------
-uint32_t PlatformHAL::now_ms() {
-    using namespace std::chrono;
-    return static_cast<uint32_t>(
-        duration_cast<milliseconds>(steady_clock::now().time_since_epoch()).count()
-    );
 }
 
-// -----------------------------------------------------------------------------
-// Crypto (SIL stub; NOT cryptographically secure)
-// -----------------------------------------------------------------------------
+} // namespace
+
+// ------------------------------------------------------------
+// Time
+// ------------------------------------------------------------
+
+uint32_t PlatformHAL::now_ms() {
+    // Monotonic time — good for SIL/host tests.
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::steady_clock::now().time_since_epoch()
+    ).count();
+
+    // uint32 wrap is acceptable for monotonic deltas in embedded-style code.
+    return static_cast<uint32_t>(ms);
+}
+
+// ------------------------------------------------------------
+// Crypto (STUBS — NOT production crypto)
+// ------------------------------------------------------------
+
 Hash256 PlatformHAL::sha256(const void* data, size_t len) {
-    Hash256 h = Hash256::null_hash();
-    if (!data || len == 0) return h;
+    Hash256 h{};
+    std::memset(h.data, 0, sizeof(h.data));
 
-    // Simple, deterministic mixing (NOT real SHA-256).
-    // Goal: stable IDs for SIL + tests.
-    const uint8_t* p = static_cast<const uint8_t*>(data);
-
-    uint64_t a = 1469598103934665603ULL; // FNV-like seed
-    uint64_t b = 1099511628211ULL;
-    for (size_t i = 0; i < len; ++i) {
-        a ^= static_cast<uint64_t>(p[i]);
-        a *= b;
-        a ^= (a >> 33);
-        a *= 0xff51afd7ed558ccdULL;
+    if (!data || len == 0) {
+        return h;
     }
 
-    // Expand into 32 bytes
-    for (size_t i = 0; i < 32; i += 8) {
-        uint64_t v = a + (0x9e3779b97f4a7c15ULL * (i + 1)) + (static_cast<uint64_t>(len) << 1);
-        std::memcpy(&h.data[i], &v, 8);
-        a ^= (v >> 29);
-        a *= 0xc4ceb9fe1a85ec53ULL;
+    // Non-cryptographic placeholder for SIL.
+    // Deterministic: sums bytes + mixes length.
+    uint64_t sum = 0;
+    const uint8_t* b = static_cast<const uint8_t*>(data);
+    for (size_t i = 0; i < len; ++i) {
+        sum = (sum * 1315423911u) ^ b[i] ^ (sum >> 16);
+    }
+
+    // Copy some mixed bytes
+    std::memcpy(h.data, &sum, std::min(sizeof(sum), sizeof(h.data)));
+    h.data[8]  = static_cast<uint8_t>(len & 0xFF);
+    h.data[9]  = static_cast<uint8_t>((len >> 8) & 0xFF);
+    h.data[10] = static_cast<uint8_t>((len >> 16) & 0xFF);
+    h.data[11] = static_cast<uint8_t>((len >> 24) & 0xFF);
+
+    // Fill remainder deterministically
+    for (size_t i = 12; i < 32; ++i) {
+        h.data[i] = static_cast<uint8_t>((sum >> ((i % 8) * 8)) & 0xFF) ^ static_cast<uint8_t>(i * 17);
     }
 
     return h;
 }
 
 bool PlatformHAL::ed25519_sign(const Hash256& /*msg*/, uint8_t signature[64]) {
-    // SIL stub: fills deterministic-ish pattern
     if (!signature) return false;
+    // Stub signature pattern for SIL
     std::memset(signature, 0xAB, 64);
     return true;
 }
 
-// -----------------------------------------------------------------------------
-// RNG helpers (ONLY for stubs/tests; never for crypto)
-// -----------------------------------------------------------------------------
-void PlatformHAL::seed_rng_for_stubs(uint32_t seed) {
-    rng_.seed(static_cast<uint64_t>(seed));
-    rng_seeded_ = true;
-}
+// ------------------------------------------------------------
+// Flash (STUBS)
+// ------------------------------------------------------------
 
-float PlatformHAL::random_float(float min, float max) {
-    if (!rng_seeded_) seed_rng_for_stubs(1);
-    std::uniform_real_distribution<float> dist(min, max);
-    return dist(rng_);
-}
-
-std::string PlatformHAL::generate_tx_id() {
-    if (!rng_seeded_) seed_rng_for_stubs(1);
-
-    static constexpr char kHex[] = "0123456789abcdef";
-    std::string out;
-    out.reserve(24);
-
-    std::uniform_int_distribution<int> dist(0, 15);
-    for (int i = 0; i < 24; ++i) {
-        out.push_back(kHex[dist(rng_)]);
-    }
-    return out;
-}
-
-// -----------------------------------------------------------------------------
-// Storage (SIL stub)
-// -----------------------------------------------------------------------------
 bool PlatformHAL::flash_write(uint32_t /*address*/, const void* /*data*/, size_t /*len*/) {
-    if (!rng_seeded_) seed_rng_for_stubs(1);
-
-#ifdef RAPS_ENABLE_SIL_FAULTS
-    {
-        std::lock_guard<std::mutex> lk(g_sil_fault_mutex);
-
-        if (g_sil_fault_cfg.flash_write_fail_once) {
-            g_sil_fault_cfg.flash_write_fail_once = false;
-            metric_emit("sil.fault.flash_write_fail_once", 1.0f);
-            return false;
-        }
-
-        if (g_sil_fault_cfg.flash_write_fail_probability > 0.0f) {
-            std::uniform_real_distribution<float> u(0.0f, 1.0f);
-            if (u(rng_) < g_sil_fault_cfg.flash_write_fail_probability) {
-                metric_emit("sil.fault.flash_write_fail_probability", 1.0f);
-                return false;
-            }
-        }
+    // Optional SIL fault injection
+    if (should_fail(fault_cfg().flash_write_fail_prob)) {
+        return false;
     }
-#endif
-
-    // Default SIL behavior: succeed
     return true;
 }
 
 bool PlatformHAL::flash_read(uint32_t /*address*/, void* data, size_t len) {
-    if (!data || len == 0) return false;
+    if (!data) return false;
 
-    // Default SIL behavior: return zeroed data
+    if (should_fail(fault_cfg().flash_read_fail_prob)) {
+        return false;
+    }
+
+    // Stub: returns zeroed bytes
     std::memset(data, 0, len);
     return true;
 }
 
-// -----------------------------------------------------------------------------
-// Actuation (SIL stub)
-// -----------------------------------------------------------------------------
+// ------------------------------------------------------------
+// Actuator interface (STUB)
+// - Idempotent by tx_id
+// - Simulated latency
+// - Optional SIL failures
+// ------------------------------------------------------------
+
 bool PlatformHAL::actuator_execute(
-    const char* /*tx_id*/,
+    const char* tx_id,
     float /*throttle*/,
     float /*valve*/,
     uint32_t timeout_ms
 ) {
-    if (!rng_seeded_) seed_rng_for_stubs(1);
-
-    int32_t simulated_latency_ms = 0;
-
-#ifdef RAPS_ENABLE_SIL_FAULTS
-    {
-        std::lock_guard<std::mutex> lk(g_sil_fault_mutex);
-
-        // Forced latency override
-        if (g_sil_fault_cfg.actuator_forced_latency_ms >= 0) {
-            simulated_latency_ms = g_sil_fault_cfg.actuator_forced_latency_ms;
-        } else {
-            std::uniform_int_distribution<int32_t> d(3, 20);
-            simulated_latency_ms = d(rng_);
-        }
-
-        // One-shot timeout fault
-        if (g_sil_fault_cfg.actuator_timeout_once) {
-            g_sil_fault_cfg.actuator_timeout_once = false;
-            metric_emit("sil.fault.actuator_timeout_once", 1.0f);
-            simulated_latency_ms = static_cast<int32_t>(timeout_ms) + 1;
-        }
-
-        // Probabilistic timeout fault
-        if (g_sil_fault_cfg.actuator_timeout_probability > 0.0f) {
-            std::uniform_real_distribution<float> u(0.0f, 1.0f);
-            if (u(rng_) < g_sil_fault_cfg.actuator_timeout_probability) {
-                metric_emit("sil.fault.actuator_timeout_probability", 1.0f);
-                simulated_latency_ms = static_cast<int32_t>(timeout_ms) + 1;
-            }
-        }
-    }
-#else
-    // No faults compiled: normal latency
-    std::uniform_int_distribution<int32_t> d(3, 20);
-    simulated_latency_ms = d(rng_);
-#endif
-
-    // Simulated timeout behavior
-    if (static_cast<uint32_t>(std::max<int32_t>(0, simulated_latency_ms)) > timeout_ms) {
-        metric_emit("actuator.timeout", 1.0f);
+    if (!tx_id || tx_id[0] == '\0') {
         return false;
     }
 
+    // Ensure RNG seeded (deterministic tests can seed explicitly via seed_rng_for_stubs)
+    (void)rng_ready();
+
+    // Idempotency: if we've already applied this tx_id, succeed immediately.
+    {
+        std::lock_guard<std::mutex> lk(hal_mutex());
+        auto& set = applied_tx_ids();
+        if (set.find(tx_id) != set.end()) {
+            // In a real system, this means "already applied".
+            return true;
+        }
+    }
+
+    // Simulate latency
+    std::uniform_real_distribution<float> d(
+        fault_cfg().actuator_latency_min_s,
+        fault_cfg().actuator_latency_max_s
+    );
+
+    float latency_s = d(rng_);
+    uint32_t latency_ms = static_cast<uint32_t>(latency_s * 1000.0f);
+
+    if (latency_ms > timeout_ms) {
+        return false; // timeout
+    }
+
+#if defined(RAPS_ENABLE_SIL_FAULTS) && (RAPS_ENABLE_SIL_FAULTS == 1)
+    if (should_fail(fault_cfg().actuator_fail_prob)) {
+        return false;
+    }
+#endif
+
+    // Mark tx applied (idempotency guarantee)
+    {
+        std::lock_guard<std::mutex> lk(hal_mutex());
+        applied_tx_ids().insert(std::string(tx_id));
+    }
+
     return true;
 }
 
-// -----------------------------------------------------------------------------
-// Telemetry / Metrics
-// -----------------------------------------------------------------------------
+// ------------------------------------------------------------
+// Downlink queue (STUB)
+// ------------------------------------------------------------
+
 bool PlatformHAL::downlink_queue(const void* /*data*/, size_t /*len*/) {
-    // SIL stub: always succeeds
+    if (should_fail(fault_cfg().downlink_fail_prob)) {
+        return false;
+    }
     return true;
 }
+
+// ------------------------------------------------------------
+// Metrics (STUB)
+// ------------------------------------------------------------
 
 void PlatformHAL::metric_emit(const char* /*name*/, float /*value*/) {
-    // Default: no-op (keeps SIL quiet)
+    // Intentionally silent by default (keeps tests clean).
+    // Hook into stdout/logging later if desired.
 }
 
 void PlatformHAL::metric_emit(
@@ -208,27 +242,45 @@ void PlatformHAL::metric_emit(
     const char* /*tag_key*/,
     const char* /*tag_value*/
 ) {
-    // Default: no-op (keeps SIL quiet)
+    // Intentionally silent by default.
 }
 
-#ifdef RAPS_ENABLE_SIL_FAULTS
-// -----------------------------------------------------------------------------
-// SIL Fault Injection API
-// -----------------------------------------------------------------------------
-void PlatformHAL::sil_set_fault_config(const SilFaultConfig& cfg) {
-    std::lock_guard<std::mutex> lk(g_sil_fault_mutex);
-    g_sil_fault_cfg = cfg;
-    metric_emit("sil.fault.config_set", 1.0f);
+// ------------------------------------------------------------
+// RNG for stubs (NOT crypto)
+// ------------------------------------------------------------
+
+void PlatformHAL::seed_rng_for_stubs(uint32_t seed) {
+    rng_.seed(static_cast<uint64_t>(seed));
+    rng_seeded_ = true;
+
+    // Reset idempotency history for deterministic tests when reseeding
+    std::lock_guard<std::mutex> lk(hal_mutex());
+    applied_tx_ids().clear();
 }
 
-PlatformHAL::SilFaultConfig PlatformHAL::sil_get_fault_config() {
-    std::lock_guard<std::mutex> lk(g_sil_fault_mutex);
-    return g_sil_fault_cfg;
+float PlatformHAL::random_float(float min, float max) {
+    if (!rng_seeded_) {
+        // Default seed so behavior is stable-ish even if caller forgets to seed.
+        seed_rng_for_stubs(1);
+    }
+
+    if (max < min) std::swap(min, max);
+    std::uniform_real_distribution<float> dist(min, max);
+    return dist(rng_);
 }
 
-void PlatformHAL::sil_reset_faults() {
-    std::lock_guard<std::mutex> lk(g_sil_fault_mutex);
-    g_sil_fault_cfg = SilFaultConfig{};
-    metric_emit("sil.fault.reset", 1.0f);
+std::string PlatformHAL::generate_tx_id() {
+    if (!rng_seeded_) {
+        seed_rng_for_stubs(1);
+    }
+
+    static constexpr char HEX[] = "0123456789abcdef";
+    std::uniform_int_distribution<int> dist(0, 15);
+
+    std::string s;
+    s.reserve(24);
+    for (int i = 0; i < 24; ++i) {
+        s.push_back(HEX[dist(rng_)]);
+    }
+    return s;
 }
-#endif
