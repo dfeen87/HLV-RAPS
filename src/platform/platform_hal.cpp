@@ -14,11 +14,20 @@
 #include <cstdint>
 #include <cstring>
 #include <iomanip>
+#include <iostream>   // <-- added (optional metrics)
 #include <mutex>
 #include <random>
 #include <sstream>
 #include <string>
 #include <unordered_set>
+
+// ------------------------------------------------------------
+// Optional metric printing (OFF by default)
+// Enable with: -DRAPS_PLATFORM_METRICS_STDOUT=1
+// ------------------------------------------------------------
+#ifndef RAPS_PLATFORM_METRICS_STDOUT
+#define RAPS_PLATFORM_METRICS_STDOUT 0
+#endif
 
 // ------------------------------------------------------------
 // Static members
@@ -60,8 +69,9 @@ std::unordered_set<std::string>& applied_tx_ids() {
     return s;
 }
 
+// forces seed in random_float()
 bool rng_ready() {
-    return PlatformHAL::random_float(0.0f, 1.0f) >= 0.0f; // forces seed in random_float()
+    return PlatformHAL::random_float(0.0f, 1.0f) >= 0.0f;
 }
 
 bool should_fail(float prob) {
@@ -121,7 +131,8 @@ Hash256 PlatformHAL::sha256(const void* data, size_t len) {
 
     // Fill remainder deterministically
     for (size_t i = 12; i < 32; ++i) {
-        h.data[i] = static_cast<uint8_t>((sum >> ((i % 8) * 8)) & 0xFF) ^ static_cast<uint8_t>(i * 17);
+        h.data[i] = static_cast<uint8_t>((sum >> ((i % 8) * 8)) & 0xFF)
+                  ^ static_cast<uint8_t>(i * 17);
     }
 
     return h;
@@ -228,21 +239,36 @@ bool PlatformHAL::downlink_queue(const void* /*data*/, size_t /*len*/) {
 }
 
 // ------------------------------------------------------------
-// Metrics (STUB)
+// Metrics (STUB by default; opt-in stdout)
 // ------------------------------------------------------------
 
-void PlatformHAL::metric_emit(const char* /*name*/, float /*value*/) {
-    // Intentionally silent by default (keeps tests clean).
-    // Hook into stdout/logging later if desired.
+void PlatformHAL::metric_emit(const char* name, float value) {
+#if RAPS_PLATFORM_METRICS_STDOUT
+    if (!name) name = "metric.null";
+    std::cout << "[METRIC] " << name << "=" << value << "\n";
+#else
+    (void)name;
+    (void)value;
+#endif
 }
 
 void PlatformHAL::metric_emit(
-    const char* /*name*/,
-    float /*value*/,
-    const char* /*tag_key*/,
-    const char* /*tag_value*/
+    const char* name,
+    float value,
+    const char* tag_key,
+    const char* tag_value
 ) {
-    // Intentionally silent by default.
+#if RAPS_PLATFORM_METRICS_STDOUT
+    if (!name) name = "metric.null";
+    if (!tag_key) tag_key = "tag";
+    if (!tag_value) tag_value = "null";
+    std::cout << "[METRIC] " << name << "=" << value << " " << tag_key << "=" << tag_value << "\n";
+#else
+    (void)name;
+    (void)value;
+    (void)tag_key;
+    (void)tag_value;
+#endif
 }
 
 // ------------------------------------------------------------
