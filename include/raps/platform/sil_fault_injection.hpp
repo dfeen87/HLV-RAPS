@@ -1,53 +1,137 @@
 #pragma once
+
 // ============================================================
-// SIL Fault Injection Hooks (Header)
-// - Optional compile-time feature
-// - Deterministic knobs for tests + CI
+// SIL Fault Injection Control
+// ------------------------------------------------------------
+// Purpose:
+// - Deterministic, test-driven fault injection for SIL
+// - Explicit control instead of probabilistic-only failures
+// - Zero impact unless RAPS_ENABLE_SIL_FAULTS == 1
 //
-// Enable with:
-//   -DRAPS_ENABLE_SIL_FAULTS=1
+// This file is intentionally header-only.
 // ============================================================
 
+#include <atomic>
 #include <cstdint>
 
-namespace RAPS::SIL {
+namespace raps::sil {
 
-// High-level fault categories used by PlatformHAL stubs.
-// Keep this small and stable: tests depend on it.
-enum class FaultPoint : uint8_t {
-    FLASH_WRITE = 0,
-    FLASH_READ  = 1,
-    DOWNLINK    = 2,
-    ACTUATOR    = 3,
-    METRICS     = 4,
+// ------------------------------------------------------------
+// Fault Types
+// ------------------------------------------------------------
+
+enum class FaultType : uint8_t {
+    NONE = 0,
+
+    FLASH_WRITE_FAIL,
+    FLASH_READ_FAIL,
+    ACTUATOR_FAIL,
+    ACTUATOR_TIMEOUT,
+    DOWNLINK_FAIL,
+
+    METRIC_DROP,
 };
 
-// Controls for deterministic behavior in SIL.
-// - If forced_failure_countdown > 0: next N should_fail() calls return true,
-//   then it returns to probabilistic mode.
-// - Probability is expressed in "per million" to avoid floats.
-struct FaultConfig {
-    uint32_t probability_per_million = 0;   // 0 => disabled
-    uint32_t forced_failure_countdown = 0;  // deterministic "trip" mode
+// ------------------------------------------------------------
+// Fault Control State
+// ------------------------------------------------------------
+
+struct FaultState {
+    std::atomic<uint32_t> flash_write_fail_count{0};
+    std::atomic<uint32_t> flash_read_fail_count{0};
+    std::atomic<uint32_t> actuator_fail_count{0};
+    std::atomic<uint32_t> actuator_timeout_count{0};
+    std::atomic<uint32_t> downlink_fail_count{0};
+
+    std::atomic<bool> metrics_disabled{false};
 };
 
-// Initialize with safe defaults (faults off).
-void init_faults();
+// ------------------------------------------------------------
+// Global SIL Fault Controller (singleton-style)
+// ------------------------------------------------------------
 
-// Set / get configuration for a fault point.
-void set_fault_config(FaultPoint p, const FaultConfig& cfg);
-FaultConfig get_fault_config(FaultPoint p);
+class FaultInjector {
+public:
+    static FaultInjector& instance() {
+        static FaultInjector inst;
+        return inst;
+    }
 
-// Convenience helpers
-void disable_fault(FaultPoint p);
-void force_fail_next(FaultPoint p, uint32_t count = 1);
+    // ----------- Injection APIs -----------
 
-// Decision hook used by PlatformHAL stubs.
-// Returns true if the operation should fail.
-bool should_fail(FaultPoint p);
+    void inject_flash_write_fail(uint32_t times = 1) {
+        state_.flash_write_fail_count.fetch_add(times);
+    }
 
-// For observability in tests.
-uint64_t get_attempt_count(FaultPoint p);
-uint64_t get_failure_count(FaultPoint p);
+    void inject_flash_read_fail(uint32_t times = 1) {
+        state_.flash_read_fail_count.fetch_add(times);
+    }
 
-} // namespace RAPS::SIL
+    void inject_actuator_fail(uint32_t times = 1) {
+        state_.actuator_fail_count.fetch_add(times);
+    }
+
+    void inject_actuator_timeout(uint32_t times = 1) {
+        state_.actuator_timeout_count.fetch_add(times);
+    }
+
+    void inject_downlink_fail(uint32_t times = 1) {
+        state_.downlink_fail_count.fetch_add(times);
+    }
+
+    void disable_metrics(bool disable = true) {
+        state_.metrics_disabled.store(disable);
+    }
+
+    // ----------- Consumption APIs -----------
+
+    bool consume_flash_write_fail() {
+        return consume(state_.flash_write_fail_count);
+    }
+
+    bool consume_flash_read_fail() {
+        return consume(state_.flash_read_fail_count);
+    }
+
+    bool consume_actuator_fail() {
+        return consume(state_.actuator_fail_count);
+    }
+
+    bool consume_actuator_timeout() {
+        return consume(state_.actuator_timeout_count);
+    }
+
+    bool consume_downlink_fail() {
+        return consume(state_.downlink_fail_count);
+    }
+
+    bool metrics_disabled() const {
+        return state_.metrics_disabled.load();
+    }
+
+    // ----------- Reset (useful for test setup/teardown) -----------
+
+    void reset_all() {
+        state_.flash_write_fail_count.store(0);
+        state_.flash_read_fail_count.store(0);
+        state_.actuator_fail_count.store(0);
+        state_.actuator_timeout_count.store(0);
+        state_.downlink_fail_count.store(0);
+        state_.metrics_disabled.store(false);
+    }
+
+private:
+    FaultInjector() = default;
+
+    static bool consume(std::atomic<uint32_t>& counter) {
+        uint32_t current = counter.load();
+        if (current == 0) {
+            return false;
+        }
+        return counter.fetch_sub(1) > 0;
+    }
+
+    FaultState state_;
+};
+
+} // namespace raps::sil
