@@ -1,46 +1,48 @@
 #include <iostream>
 #include <thread>
-
-#include "raps/supervisor/redundant_supervisor.hpp"
-#include "raps/platform/platform_hal.hpp"
-#include "raps/core/raps_definitions.hpp"
+#include <chrono>
 
 #include "sil_config.hpp"
-#include "sil_safety_cases.hpp"
 #include "sil_supervisor_tests.hpp"
 
+#include "raps/platform/platform_hal.hpp"
+#include "raps/supervisor/redundant_supervisor.hpp"
+
+static void sil_sleep_ms(uint32_t ms) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+}
+
 int main() {
-    std::cout << "[SIL] Starting RAPS Software-in-the-Loop\n";
+    std::cout << "========================================================\n";
+    std::cout << " RAPS SIL Hardened Runner\n";
+    std::cout << "========================================================\n";
 
     PlatformHAL::seed_rng_for_stubs(SILConfig::RANDOM_SEED);
 
     RedundantSupervisor supervisor;
     supervisor.init();
 
-    PhysicsState state{};
-    state.mass_kg = 250000.0f;
-
-    for (uint32_t cycle = 0; cycle < SILConfig::TOTAL_CYCLES; ++cycle) {
-        state.timestamp_ms = PlatformHAL::now_ms();
-
-        // Inject faults if enabled
-        if (SILConfig::ENABLE_FAULT_INJECTION &&
-            cycle == SILConfig::FAULT_AT_CYCLE) {
-            inject_execution_failure();
-        }
-
-        supervisor.run_cycle(state);
-
-        if (SILConfig::VERBOSE_LOGGING && cycle % 25 == 0) {
-            std::cout << "[SIL] Cycle " << cycle << " OK\n";
-        }
-
-        std::this_thread::sleep_for(
-            std::chrono::milliseconds(SILConfig::CYCLE_INTERVAL_MS)
-        );
+    // --- Scenario 1: Nominal cycles ---
+    if (SILConfig::VERBOSE_LOGGING) {
+        std::cout << "[SIL] Scenario 1: nominal cycles (" << SILConfig::NOMINAL_CYCLES << ")\n";
     }
+    sil_test_nominal_cycles(supervisor, SILConfig::NOMINAL_CYCLES);
 
-    std::cout << "[SIL] Completed successfully\n";
+    // --- Scenario 2: Failover path ---
+    if (SILConfig::VERBOSE_LOGGING) {
+        std::cout << "[SIL] Scenario 2: failover at cycle " << SILConfig::FAILOVER_AT_CYCLE << "\n";
+    }
+    sil_test_failover_path(supervisor, SILConfig::NOMINAL_CYCLES, SILConfig::FAILOVER_AT_CYCLE);
+
+    // --- Scenario 3: Prediction mismatch ---
+    if (SILConfig::VERBOSE_LOGGING) {
+        std::cout << "[SIL] Scenario 3: prediction mismatch detection\n";
+    }
+    sil_test_prediction_mismatch(supervisor);
+
+    // Optional pacing (keeps SIL closer to RTOS cadence if desired)
+    sil_sleep_ms(SILConfig::CYCLE_INTERVAL_MS);
+
+    std::cout << "[SIL] ✅ ALL SCENARIOS PASSED\n";
     return 0;
 }
-
