@@ -231,6 +231,74 @@ Typical flow:
 6. **Commit** every step to ITL and anchor Merkle batches
 
 ---
+## Software-in-the-Loop (SIL) & Hardware-in-the-Loop (HIL)
+
+RAPS is designed to be **flight-ready by construction**, not by late-stage testing.  
+To support this, the repository now includes **first-class SIL and HIL infrastructure** that allows the entire governance, safety, and prediction stack to be exercised *before* deployment on real hardware.
+
+---
+
+### Software-in-the-Loop (SIL)
+
+The SIL layer provides a **deterministic, CI-friendly execution environment** that runs the full RAPS control, prediction, and safety pipeline on a host machine.
+
+**Key capabilities**
+- **PlatformHAL SIL backend**  
+  Target-agnostic stubs for time, flash, actuation, telemetry, and metrics.
+- **Compile-time fault injection**  
+  Controlled via build flags to simulate actuator failures, flash errors, latency spikes, and downlink loss.
+- **Deterministic execution mode**  
+  Enables reproducible test runs for CI, regression testing, and safety validation.
+- **Coverage gates**  
+  Explicit pass/fail gates ensure that:
+  - rollback paths are exercised,
+  - supervisor failover is triggered,
+  - safety monitors observe and respond to injected faults.
+
+**Why it matters**
+- Validates *governance logic*, not just math.
+- Catches race conditions and rollback bugs early.
+- Makes safety behavior auditable and repeatable.
+
+---
+
+### Hardware-in-the-Loop (HIL)
+
+The HIL layer bridges RAPS to **real hardware or a physical test rig**, validating that software assumptions hold under real timing, transport, and actuator constraints.
+
+**Key capabilities**
+- **HIL-backed PlatformHAL**  
+  The same interface used in SIL, but linked against a hardware or rig-server implementation.
+- **Rig-driven actuator validation**  
+  Confirms idempotent command execution, timeout handling, and transaction safety.
+- **Downlink and telemetry verification**  
+  Ensures ground-facing observability paths are alive and correctly routed.
+- **One-shot readiness executable**  
+  `examples/hil/hil_readiness_check.cpp` provides a fast, binary “go / no-go” signal for:
+  - timing,
+  - hashing,
+  - flash access,
+  - actuation,
+  - downlink.
+
+**Why it matters**
+- Proves the software can survive *real* latencies and failures.
+- Prevents “it worked in simulation” surprises.
+- Provides a clean handoff from lab validation to flight integration.
+
+---
+
+### Unified Design Philosophy
+
+SIL and HIL are not separate code paths — they are **link-time personalities** of the same system.
+
+- The **same governance logic** runs in SIL, HIL, and flight.
+- Safety and rollback behavior is validated *before* certification.
+- Flight builds simply replace the PlatformHAL backend with certified hardware drivers.
+
+This approach enables RAPS to move from research → simulation → hardware → flight **without rewriting core logic**, preserving correctness, traceability, and safety guarantees at every stage.
+
+---
 
 ## Collaboration
 
