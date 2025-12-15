@@ -4,18 +4,19 @@
 
 namespace SILConfig {
 
-// Deterministic execution
+// Determinism
 constexpr uint32_t RANDOM_SEED = 42;
 
-// Simulation timing
+// Timing
 constexpr uint32_t CYCLE_INTERVAL_MS = 50;
-constexpr uint32_t TOTAL_CYCLES      = 500;
 
-// Fault injection
-constexpr bool ENABLE_FAULT_INJECTION = true;
-constexpr uint32_t FAULT_AT_CYCLE     = 120;
+// Default cycles (per scenario)
+constexpr uint32_t NOMINAL_CYCLES = 200;
 
-// Logging
+// Failover test
+constexpr uint32_t FAILOVER_AT_CYCLE = 80;
+
+// Verbosity
 constexpr bool VERBOSE_LOGGING = true;
 
 }
