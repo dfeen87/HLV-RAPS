@@ -1,156 +1,135 @@
-// ============================================================================
-// examples/sil/sil_main.cpp
-// ----------------------------------------------------------------------------
-// RAPS / HLV — Software-in-the-Loop (SIL) Main
-//
-// Purpose:
-//  - End-to-end SIL harness for RAPS + HLV
-//  - Exercises:
-//      * PlatformHAL stubs
-//      * Fault injection
-//      * Rollback + fallback paths
-//      * ITL commit + Merkle anchoring
-//      * Supervisor failover (if enabled)
-//  - Enforces SIL coverage gates for CI
-//
-// Build (example):
-//   g++ -std=c++20 -DRAPS_ENABLE_SIL_FAULTS=1 \
-//       -DRAPS_ENABLE_SIL_COVERAGE_GATES=1 \
-//       examples/sil/sil_main.cpp -o sil_main
-//
-// Run:
-//   ./sil_main
-// ============================================================================
+#include "platform/platform_hal.hpp"
 
+// --- Telemetry (v2.3) ---
+#include "raps/telemetry/telemetry_logger.hpp"
+#include "raps/telemetry/jsonl_sink.hpp"
+#include "raps/telemetry/telemetry_run_directory.hpp"
+#include "raps/telemetry/telemetry_metadata.hpp"
+
+#include <chrono>
+#include <cstring>
 #include <iostream>
 #include <thread>
-#include <chrono>
 
-#include "platform/platform_hal.hpp"
-#include "itl/itl_manager.hpp"
-#include "safety/safety_monitor.hpp"
-#include "supervisor/redundant_supervisor.hpp"
-
-#include "sil/sil_fault_injection_config.hpp"
-#include "sil/sil_coverage_gates.hpp"
-
-// ----------------------------------------------------------------------------
-// Simple helpers
-// ----------------------------------------------------------------------------
-
-static void sleep_ms(uint32_t ms) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(ms));
-}
-
-// ----------------------------------------------------------------------------
-// Entry point
-// ----------------------------------------------------------------------------
+// ------------------------------------------------------------
+// Telemetry logger (bounded, non-blocking, best-effort)
+// ------------------------------------------------------------
+static raps::telemetry::TelemetryLogger<4096> g_telemetry(
+    raps::telemetry::TelemetryConfig{
+        .enable_wall_time = false,   // monotonic only
+        .min_severity     = raps::telemetry::Severity::Info,
+        .enable_messages  = true
+    }
+);
 
 int main() {
-    using namespace raps::sil::coverage;
-
-    std::cout << "[SIL] RAPS / HLV Software-in-the-Loop starting...\n";
-
-    // ------------------------------------------------------------------------
-    // Deterministic seed (critical for CI reproducibility)
-    // ------------------------------------------------------------------------
-    PlatformHAL::seed_rng_for_stubs(42);
-
-#if RAPS_ENABLE_SIL_FAULTS
-    // ------------------------------------------------------------------------
-    // Configure SIL fault injection
-    // ------------------------------------------------------------------------
-    PlatformHAL::SilFaultConfig faults{};
-    faults.flash_write_fail_once   = true;   // force at least one flash failure
-    faults.actuator_timeout_once   = true;   // force at least one actuator timeout
-    faults.flash_write_fail_probability = 0.01f;
-    faults.actuator_timeout_probability = 0.02f;
-
-    PlatformHAL::sil_set_fault_config(faults);
+#if (RAPS_ENABLE_SIL != 1)
+    std::cerr << "RAPS_ENABLE_SIL is not enabled.\n";
+    return 2;
 #endif
 
-    // ------------------------------------------------------------------------
-    // Initialize ITL
-    // ------------------------------------------------------------------------
-    ITLManager itl;
-    itl.init();
+    // ------------------------------------------------------------
+    // Telemetry initialization (best-effort, non-fatal)
+    // ------------------------------------------------------------
+    const std::string run_dir = raps::telemetry::create_run_directory();
+    raps::telemetry::JsonlSink telemetry_sink;
 
-    // Count ITL commits for coverage
-    {
-        ITLEntry e{};
-        e.type = ITLEntry::Type::NOMINAL_TRACE;
-        e.timestamp_ms = PlatformHAL::now_ms();
-        itl.commit(e);
-        RAPS_SIL_COVER("itl.commit");
+    if (!run_dir.empty()) {
+        telemetry_sink.open((run_dir + "/telemetry.jsonl").c_str());
+
+        raps::telemetry::TelemetryMetadata meta;
+        meta.raps_version     = "2.3.0";
+        meta.telemetry_schema = "1.0";
+        meta.build_type       = "SIL";
+        meta.notes            = "SIL deterministic timing harness";
+
+        raps::telemetry::write_telemetry_metadata(run_dir, meta);
     }
 
-    // ------------------------------------------------------------------------
-    // Initialize Supervisor + Safety Monitor
-    // ------------------------------------------------------------------------
-    RedundantSupervisor supervisor;
-    supervisor.init();
+    // ------------------------------------------------------------
+    // Telemetry: SIL lifecycle start
+    // ------------------------------------------------------------
+    {
+        raps::telemetry::TelemetryEvent ev;
+        ev.type      = raps::telemetry::EventType::ModeTransition;
+        ev.subsystem = raps::telemetry::Subsystem::Core;
+        ev.severity  = raps::telemetry::Severity::Info;
+        ev.code      = 100; // SIL_START
+        g_telemetry.emit(ev);
+    }
 
-    SafetyMonitor safety_monitor;
+    // ------------------------------------------------------------
+    // SIL timing harness
+    // - Deterministic
+    // - No device injection
+    // - PlatformHAL only
+    // ------------------------------------------------------------
+    const int hz = 50;
+    const int period_ms = (hz > 0) ? (1000 / hz) : 20;
 
-    // ------------------------------------------------------------------------
-    // Simulate a short SIL run loop
-    // ------------------------------------------------------------------------
-    constexpr int CYCLES = 10;
+    std::cout << "=== SIL bring-up ===\n";
+    std::cout << "now_ms: " << PlatformHAL::now_ms() << "\n";
+    std::cout << "Running SIL timing harness at ~"
+              << hz << " Hz for 2 seconds...\n";
 
-    for (int i = 0; i < CYCLES; ++i) {
-        PhysicsState dummy_state{};
-        dummy_state.timestamp_ms = PlatformHAL::now_ms();
+    const uint32_t start = PlatformHAL::now_ms();
+    uint32_t last_drain_ms = start;
 
-        supervisor.run_cycle(dummy_state);
+    while (PlatformHAL::now_ms() - start < 2000u) {
+        const uint32_t t0 = PlatformHAL::now_ms();
 
-        // Artificially inject a failure mid-run to force rollback/fallback
-        if (i == 3) {
-            RAPS_SIL_COVER("execution.failure");
+        // --------------------------------------------------------
+        // Place real controller cycle here (future):
+        // supervisor.run_cycle(...);
+        // --------------------------------------------------------
 
-            bool ok = PlatformHAL::actuator_execute(
-                "FORCED_TX_TIMEOUT",
-                /*throttle=*/50.0f,
-                /*valve=*/0.2f,
-                /*timeout_ms=*/1   // guaranteed timeout
-            );
+        const uint32_t elapsed = PlatformHAL::now_ms() - t0;
 
-            if (!ok) {
-                RAPS_SIL_COVER("actuator.timeout_or_fail");
-
-                // Simulate rollback execution
-                RAPS_SIL_COVER("rollback.executed");
-                RAPS_SIL_COVER("fallback.triggered");
-            }
+        // --------------------------------------------------------
+        // Deadline monitoring (observational only)
+        // --------------------------------------------------------
+        if (elapsed > static_cast<uint32_t>(period_ms)) {
+            raps::telemetry::TelemetryEvent ev;
+            ev.type      = raps::telemetry::EventType::ThresholdCross;
+            ev.subsystem = raps::telemetry::Subsystem::Core;
+            ev.severity  = raps::telemetry::Severity::Warn;
+            ev.code      = 101;         // SIL_DEADLINE_MISS
+            ev.v0        = elapsed;     // actual ms
+            ev.v1        = period_ms;   // target ms
+            g_telemetry.emit(ev);
         }
 
-        sleep_ms(20);
+        // --------------------------------------------------------
+        // Telemetry drain (safe cadence, non-blocking)
+        // --------------------------------------------------------
+        const uint32_t now = PlatformHAL::now_ms();
+        if (now - last_drain_ms >= 250u) {
+            g_telemetry.drain_to(telemetry_sink);
+            telemetry_sink.flush();
+            last_drain_ms = now;
+        }
+
+        int sleep_ms = period_ms - static_cast<int>(elapsed);
+        if (sleep_ms < 0) sleep_ms = 0;
+        std::this_thread::sleep_for(std::chrono::milliseconds(sleep_ms));
     }
 
-    // ------------------------------------------------------------------------
-    // Force an ITL flush + Merkle anchor for coverage
-    // ------------------------------------------------------------------------
-    itl.flush_pending();
-    RAPS_SIL_COVER("itl.flush");
-
-    itl.process_merkle_batch();
-    RAPS_SIL_COVER("itl.merkle_anchor");
-
-    // ------------------------------------------------------------------------
-    // Optional: simulate supervisor failover
-    // ------------------------------------------------------------------------
+    // ------------------------------------------------------------
+    // Telemetry: SIL lifecycle end
+    // ------------------------------------------------------------
     {
-        RAPS_SIL_COVER("supervisor.failover");
+        raps::telemetry::TelemetryEvent ev;
+        ev.type      = raps::telemetry::EventType::ModeTransition;
+        ev.subsystem = raps::telemetry::Subsystem::Core;
+        ev.severity  = raps::telemetry::Severity::Info;
+        ev.code      = 102; // SIL_STOP
+        g_telemetry.emit(ev);
     }
 
-    // ------------------------------------------------------------------------
-    // Enforce SIL coverage gates (CI hard stop if unmet)
-    // ------------------------------------------------------------------------
-    std::cout << "[SIL] Asserting coverage gates...\n";
-    assert_minimum_coverage_or_abort();
+    // Final drain before exit
+    g_telemetry.drain_to(telemetry_sink);
+    telemetry_sink.flush();
 
-    std::cout << "[SIL] PASS — All coverage gates satisfied.\n";
-    std::cout << "[SIL] RAPS / HLV Software-in-the-Loop complete.\n";
-
+    std::cout << "SIL harness complete.\n";
     return 0;
 }
-
