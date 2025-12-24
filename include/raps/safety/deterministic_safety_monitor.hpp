@@ -59,6 +59,7 @@ private:
     double last_estimated_Rmax_;
     bool safing_sequence_active_;
 
+    bool hasInvalidInputs(const DsmSensorInputs& inputs) const;
     bool checkResonanceStability(double A_t, double J_coupling) const;
     double estimateCurvatureScalar(double dilation) const;
     bool checkCurvatureViolation(double R_estimated) const;
@@ -90,6 +91,16 @@ DeterministicSafetyMonitor::checkCurvatureViolation(double R_estimated) const {
 }
 
 inline bool
+DeterministicSafetyMonitor::hasInvalidInputs(
+    const DsmSensorInputs& inputs
+) const {
+    return !std::isfinite(inputs.measured_proper_time_dilation) ||
+        !std::isfinite(inputs.measured_oscillatory_prefactor_A_t) ||
+        !std::isfinite(inputs.measured_tcc_coupling_J) ||
+        !std::isfinite(inputs.current_resonance_amplitude);
+}
+
+inline bool
 DeterministicSafetyMonitor::checkResonanceStability(
     double A_t,
     double J_coupling
@@ -112,6 +123,13 @@ inline int
 DeterministicSafetyMonitor::evaluateSafety(
     const DsmSensorInputs& inputs
 ) {
+    if (hasInvalidInputs(inputs)) {
+        safing_sequence_active_ = true;
+        std::cerr
+            << "DSM ALERT: Non-finite sensor input detected — FULL SHUTDOWN\n";
+        return ACTION_FULL_SHUTDOWN;
+    }
+
     double R_estimated =
         estimateCurvatureScalar(inputs.measured_proper_time_dilation);
 
