@@ -4,6 +4,8 @@
 #include <cstring>
 #include <optional>
 
+#include "raps/core/raps_core_types.hpp"
+
 // =====================================================
 // AILEE Specific Data Structures
 // =====================================================
