@@ -1,11 +1,10 @@
 #pragma once
 
+#include <array>
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
-#include <array>
 #include <optional>
-
-#include "PropulsionPhysicsEngine.hpp"
 
 // =====================================================
 // Configuration Constants
@@ -34,11 +33,31 @@ static constexpr float ACCEPT_POSITION_DEV_M         = 500.0f;
 static constexpr float ACCEPT_VELOCITY_DEV_M_S       = 20.0f;
 static constexpr float ACCEPT_MASS_DEV_KG             = 5.0f;
 
+constexpr float R_EARTH_M = 6371000.0f;
+constexpr float G_GRAVITATIONAL_CONSTANT = 6.67430e-11f;
+constexpr float M_EARTH_KG = 5.972e24f;
+constexpr float ATMOSPHERIC_DRAG_COEFF = 0.00005f;
+
 } // namespace RAPSConfig
 
 // =====================================================
 // Core Data Structures
 // =====================================================
+
+struct PhysicsState {
+    std::array<float, 3> position_m;
+    std::array<float, 3> velocity_m_s;
+    float mass_kg;
+    uint32_t timestamp_ms;
+};
+
+struct PhysicsControlInput {
+    float thrust_magnitude_kN;
+    float gimbal_theta_rad;
+    float gimbal_phi_rad;
+    float propellant_flow_kg_s;
+    uint32_t simulation_duration_ms;
+};
 
 // SHA-256 Hash
 struct Hash256 {

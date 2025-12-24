@@ -81,17 +81,28 @@
 // ----------------------------------------------------------------------------
 // Compile-time sanity checks
 // ----------------------------------------------------------------------------
-#if RAPS_SIL_ACTUATOR_LAT_MAX_S < RAPS_SIL_ACTUATOR_LAT_MIN_S
-#error "RAPS_SIL_ACTUATOR_LAT_MAX_S must be >= RAPS_SIL_ACTUATOR_LAT_MIN_S"
-#endif
+constexpr float kRapsSilProbFlashWriteFail =
+    RAPS_SIL_PROB_FLASH_WRITE_FAIL;
+constexpr float kRapsSilProbActuatorFail =
+    RAPS_SIL_PROB_ACTUATOR_FAIL;
+constexpr float kRapsSilActuatorLatMinS =
+    RAPS_SIL_ACTUATOR_LAT_MIN_S;
+constexpr float kRapsSilActuatorLatMaxS =
+    RAPS_SIL_ACTUATOR_LAT_MAX_S;
 
-#if (RAPS_SIL_PROB_FLASH_WRITE_FAIL < 0.0f) || (RAPS_SIL_PROB_FLASH_WRITE_FAIL > 1.0f)
-#error "RAPS_SIL_PROB_FLASH_WRITE_FAIL must be in [0.0, 1.0]"
-#endif
+static_assert(
+    kRapsSilActuatorLatMaxS >= kRapsSilActuatorLatMinS,
+    "RAPS_SIL_ACTUATOR_LAT_MAX_S must be >= RAPS_SIL_ACTUATOR_LAT_MIN_S");
 
-#if (RAPS_SIL_PROB_ACTUATOR_FAIL < 0.0f) || (RAPS_SIL_PROB_ACTUATOR_FAIL > 1.0f)
-#error "RAPS_SIL_PROB_ACTUATOR_FAIL must be in [0.0, 1.0]"
-#endif
+static_assert(
+    kRapsSilProbFlashWriteFail >= 0.0f &&
+        kRapsSilProbFlashWriteFail <= 1.0f,
+    "RAPS_SIL_PROB_FLASH_WRITE_FAIL must be in [0.0, 1.0]");
+
+static_assert(
+    kRapsSilProbActuatorFail >= 0.0f &&
+        kRapsSilProbActuatorFail <= 1.0f,
+    "RAPS_SIL_PROB_ACTUATOR_FAIL must be in [0.0, 1.0]");
 
 // ----------------------------------------------------------------------------
 // Documentation note:
