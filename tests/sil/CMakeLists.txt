@@ -25,6 +25,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 add_executable(raps_sil_fault_tests
     test_fault_injection.cpp
+    ../../src/platform/platform_hal.cpp
 )
 
 # ------------------------------------------------------------
