@@ -1,13 +1,15 @@
 #pragma once
 
-#include <vector>
-#include <numeric>
+#include <algorithm>
 #include <cmath>
-#include <random>
 #include <iostream>
+#include <numeric>
+#include <random>
+#include <vector>
 
 #include "raps/core/raps_definitions.hpp"
-#include "raps/propulsion/spacetime_modulation_state.hpp"
+#include "hlv/hlv_constants.hpp"
+#include "hlv/spacetime_modulation_types.hpp"
 
 // =====================================================
 // HLV Predictive Digital Twin Engine

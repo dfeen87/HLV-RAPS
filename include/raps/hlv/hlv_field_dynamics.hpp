@@ -145,6 +145,8 @@ struct SingleCellResonance {
 // Core State Structures
 // =====================================================
 
+namespace hlv_field {
+
 struct SpacetimeModulationState {
     float warp_field_strength          = 0.0f;
     float gravito_flux_bias            = 0.0f;
@@ -259,5 +261,6 @@ private:
     std::mt19937 rng_;
 };
 
-#endif // HLV_FIELD_DYNAMICS_HPP
+} // namespace hlv_field
 
+#endif // HLV_FIELD_DYNAMICS_HPP
