@@ -337,4 +337,4 @@ dfeen87@gmail.com
 
 License
 
-MIT License. See LICENSE.
+MIT License
