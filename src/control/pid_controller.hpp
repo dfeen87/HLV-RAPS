@@ -14,15 +14,21 @@ inline float compute_pid_output(
     float elapsed_ms) {
 
     // Integral term with anti-windup
-    integral += error * elapsed_ms;
-    integral = std::max(
-        -integral_limit,
-        std::min(integral_limit, integral)
-    );
+    float dt_s = 0.0f;
+    if (elapsed_ms > 0.0f) {
+        dt_s = elapsed_ms / 1000.0f;
+    }
+
+    if (dt_s > 0.0f) {
+        integral += error * dt_s;
+        integral = std::max(
+            -integral_limit,
+            std::min(integral_limit, integral)
+        );
+    }
 
     float derivative = 0.0f;
-    if (elapsed_ms > 0.0f) {
-        float dt_s = elapsed_ms / 1000.0f;
+    if (dt_s > 0.0f) {
         derivative = (error - previous_error) / dt_s;
     }
 
