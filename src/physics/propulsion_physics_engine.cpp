@@ -5,12 +5,23 @@
 
 namespace {
 
-std::array<float, 3> normalize(const std::array<float, 3>& v) {
-    float mag = std::sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2]);
-    if (mag < 1e-6f) {
-        return {0.0f, 0.0f, 0.0f};
+constexpr float kNormalizeEpsilonSq = 1e-12f;
+
+bool normalize_with_mag(
+    const std::array<float, 3>& v,
+    std::array<float, 3>& unit_out,
+    float& mag_out)
+{
+    const float mag_sq = v[0] * v[0] + v[1] * v[1] + v[2] * v[2];
+    if (mag_sq < kNormalizeEpsilonSq) {
+        unit_out = {0.0f, 0.0f, 0.0f};
+        mag_out = 0.0f;
+        return false;
     }
-    return {v[0] / mag, v[1] / mag, v[2] / mag};
+    mag_out = std::sqrt(mag_sq);
+    const float inv_mag = 1.0f / mag_out;
+    unit_out = {v[0] * inv_mag, v[1] * inv_mag, v[2] * inv_mag};
+    return true;
 }
 
 } // namespace
@@ -28,11 +39,9 @@ std::array<float, 3> PropulsionPhysicsEngine::calculate_acceleration(
 {
     std::array<float, 3> net_force = {0.0f, 0.0f, 0.0f};
 
-    float r = std::sqrt(
-        pos_m[0]*pos_m[0] +
-        pos_m[1]*pos_m[1] +
-        pos_m[2]*pos_m[2]
-    );
+    std::array<float, 3> pos_norm = {0.0f, 0.0f, 0.0f};
+    float r = 0.0f;
+    normalize_with_mag(pos_m, pos_norm, r);
 
     // Gravity
     if (r > RAPSConfig::R_EARTH_M * 0.5f) {
@@ -40,7 +49,6 @@ std::array<float, 3> PropulsionPhysicsEngine::calculate_acceleration(
             -(RAPSConfig::G_GRAVITATIONAL_CONSTANT *
               RAPSConfig::M_EARTH_KG * mass_kg) / (r * r);
 
-        auto pos_norm = normalize(pos_m);
         net_force[0] += grav_mag * pos_norm[0];
         net_force[1] += grav_mag * pos_norm[1];
         net_force[2] += grav_mag * pos_norm[2];
@@ -53,12 +61,9 @@ std::array<float, 3> PropulsionPhysicsEngine::calculate_acceleration(
 
     // Atmospheric drag (simplified)
     if (r < RAPSConfig::R_EARTH_M + 100000.0f) {
-        auto vel_norm = normalize(vel_m_s);
-        float vel_mag = std::sqrt(
-            vel_m_s[0]*vel_m_s[0] +
-            vel_m_s[1]*vel_m_s[1] +
-            vel_m_s[2]*vel_m_s[2]
-        );
+        std::array<float, 3> vel_norm = {0.0f, 0.0f, 0.0f};
+        float vel_mag = 0.0f;
+        normalize_with_mag(vel_m_s, vel_norm, vel_mag);
 
         float drag_mag =
             -RAPSConfig::ATMOSPHERIC_DRAG_COEFF *
@@ -102,7 +107,12 @@ PhysicsState PropulsionPhysicsEngine::predict_state(
         std::cos(theta)
     };
 
-    thrust_dir_vec = normalize(thrust_dir_vec);
+    {
+        std::array<float, 3> thrust_norm = {0.0f, 0.0f, 0.0f};
+        float thrust_mag = 0.0f;
+        normalize_with_mag(thrust_dir_vec, thrust_norm, thrust_mag);
+        thrust_dir_vec = thrust_norm;
+    }
 
     // Euler integration loop (fixed timestep)
     while (remaining_time_ms > 0) {
@@ -150,14 +160,13 @@ bool PropulsionPhysicsEngine::is_state_physically_plausible(
     if (state.mass_kg < MIN_MASS_KG)
         return false;
 
-    float radius = std::sqrt(
+    // 10% inside Earth = invalid
+    const float radius_sq =
         state.position_m[0]*state.position_m[0] +
         state.position_m[1]*state.position_m[1] +
-        state.position_m[2]*state.position_m[2]
-    );
-
-    // 10% inside Earth = invalid
-    if (radius < RAPSConfig::R_EARTH_M * 0.9f)
+        state.position_m[2]*state.position_m[2];
+    const float min_radius = RAPSConfig::R_EARTH_M * 0.9f;
+    if (radius_sq < min_radius * min_radius)
         return false;
 
     // Velocity sanity check
