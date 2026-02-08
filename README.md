@@ -218,6 +218,27 @@ Typical flow:
 
 ---
 
+## Continuous Integration
+
+CI provides a fast, deterministic check for build correctness and core simulation invariants.
+
+**What CI checks**
+- Configures and builds the SIL test harness (CMake).
+- Runs the SIL fault-injection smoke tests to validate deterministic safety behavior.
+
+**What CI intentionally does not check**
+- Hardware-in-the-loop (HIL) or physical testbed validation.
+- Integration tests that depend on external infrastructure or network services.
+
+**Reproduce CI locally**
+```bash
+cmake -S tests/sil -B build
+cmake --build build
+ctest --test-dir build --output-on-failure
+```
+
+---
+
 ## Operational flow (how it behaves)
 
 1. **Snapshot** current state (Ψ) and derived informational health state (Φ)
