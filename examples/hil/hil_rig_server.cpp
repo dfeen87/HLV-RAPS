@@ -42,7 +42,7 @@ static constexpr size_t   MAX_LINE = 1024 * 1024;
 
 uint32_t now_ms() {
     auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::steady_clock::now().time_since_epoch()
+        std::chrono::system_clock::now().time_since_epoch()
     ).count();
     return static_cast<uint32_t>(ms);
 }

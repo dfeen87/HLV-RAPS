@@ -1,0 +1,29 @@
+# Build directories
+build/
+dist/
+_codeql_build_dir/
+*.o
+*.a
+*.so
+*.dylib
+*.exe
+
+# CodeQL
+_codeql_detected_source_root
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Coverage
+*.gcda
+*.gcno
+*.gcov
+coverage/
+
+# Temporary files
+/tmp/
+*.tmp
