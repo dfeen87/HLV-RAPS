@@ -10,6 +10,7 @@ public:
     static constexpr float MAX_THRUST_kN = 2500.0f;
     static constexpr float MIN_MASS_KG = 100.0f;
     static constexpr float MIN_VELOCITY_M_S = -20000.0f;
+    static constexpr float MAX_VELOCITY_M_S = 20000.0f;  // ~72,000 km/h
     static constexpr uint32_t PHYSICS_DT_MS = 10;
 
     void init();

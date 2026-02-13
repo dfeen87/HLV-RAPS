@@ -170,7 +170,6 @@ bool PropulsionPhysicsEngine::is_state_physically_plausible(
         return false;
 
     // Velocity sanity check (magnitude per component)
-    constexpr float MAX_VELOCITY_M_S = 20000.0f; // ~72,000 km/h
     if (std::abs(state.velocity_m_s[0]) > MAX_VELOCITY_M_S ||
         std::abs(state.velocity_m_s[1]) > MAX_VELOCITY_M_S ||
         std::abs(state.velocity_m_s[2]) > MAX_VELOCITY_M_S)
