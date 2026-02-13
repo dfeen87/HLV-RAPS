@@ -1,0 +1,25 @@
+# Build directories
+build/
+dist/
+*.o
+*.a
+*.so
+*.dylib
+*.exe
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Coverage
+*.gcda
+*.gcno
+*.gcov
+coverage/
+
+# Temporary files
+/tmp/
+*.tmp

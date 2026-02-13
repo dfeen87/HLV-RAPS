@@ -169,10 +169,11 @@ bool PropulsionPhysicsEngine::is_state_physically_plausible(
     if (radius_sq < min_radius * min_radius)
         return false;
 
-    // Velocity sanity check
-    if (state.velocity_m_s[0] < MIN_VELOCITY_M_S ||
-        state.velocity_m_s[1] < MIN_VELOCITY_M_S ||
-        state.velocity_m_s[2] < MIN_VELOCITY_M_S)
+    // Velocity sanity check (magnitude per component)
+    constexpr float MAX_VELOCITY_M_S = 20000.0f; // ~72,000 km/h
+    if (std::abs(state.velocity_m_s[0]) > MAX_VELOCITY_M_S ||
+        std::abs(state.velocity_m_s[1]) > MAX_VELOCITY_M_S ||
+        std::abs(state.velocity_m_s[2]) > MAX_VELOCITY_M_S)
         return false;
 
     return true;
