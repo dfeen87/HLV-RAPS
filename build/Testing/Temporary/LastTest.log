@@ -1,0 +1,36 @@
+Start testing: Feb 13 16:29 UTC
+----------------------------------------------------------
+1/1 Testing: raps_sil_fault_injection
+1/1 Test: raps_sil_fault_injection
+Command: "/home/runner/work/HLV-RAPS/HLV-RAPS/build/raps_sil_fault_tests"
+Directory: /home/runner/work/HLV-RAPS/HLV-RAPS/build
+"raps_sil_fault_injection" start time: Feb 13 16:29 UTC
+Output:
+----------------------------------------------------------
+========================================================
+ SIL TEST: PlatformHAL Fault Injection + Invariants
+========================================================
+✅ now_ms() is monotonic (non-decreasing)
+✅ generate_tx_id() returns 24 hex chars
+✅ generate_tx_id() is lowercase hex
+✅ sha256() stub is deterministic for same input
+✅ sha256() stub changes when input changes
+✅ flash_read() stub fills buffer with zeros on success
+✅ actuator_execute(tx) succeeds (first apply)
+✅ actuator_execute(tx) succeeds idempotently (already applied)
+✅ actuator_execute() respects timeout_ms (timeout_ms=0 mostly fails)
+ℹ️  SIL faults enabled. Observed in 5000 trials:
+    flash_write failures: 21
+    downlink_queue failures: 7
+✅ fault injection smoke test completed (non-gating)
+--------------------------------------------------------
+✅ ALL TESTS PASSED
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"raps_sil_fault_injection" end time: Feb 13 16:29 UTC
+"raps_sil_fault_injection" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Feb 13 16:29 UTC
