@@ -9,19 +9,19 @@
 [![C++](https://img.shields.io/badge/C%2B%2B-17-blue.svg)](https://isocpp.org/)
 [![CMake](https://img.shields.io/badge/CMake-3.10+-064F8C.svg)](https://cmake.org/)
 [![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20RTOS-lightgrey.svg)](https://github.com/dfeen87/HLV-RAPS)
-[![Documentation](https://img.shields.io/badge/docs-available-brightgreen.svg)](docs/)
-[![Sponsor](https://img.shields.io/badge/Sponsor-GitHub-ea4aaa.svg)](https://github.com/sponsors/dfeen87)
 
-[![GitHub Stars](https://img.shields.io/github/stars/dfeen87/HLV-RAPS?style=social)](https://github.com/dfeen87/HLV-RAPS/stargazers)
-[![GitHub Forks](https://img.shields.io/github/forks/dfeen87/HLV-RAPS?style=social)](https://github.com/dfeen87/HLV-RAPS/network/members)
-[![GitHub Issues](https://img.shields.io/github/issues/dfeen87/HLV-RAPS)](https://github.com/dfeen87/HLV-RAPS/issues)
-[![GitHub Pull Requests](https://img.shields.io/github/issues-pr/dfeen87/HLV-RAPS)](https://github.com/dfeen87/HLV-RAPS/pulls)
-[![Last Commit](https://img.shields.io/github/last-commit/dfeen87/HLV-RAPS)](https://github.com/dfeen87/HLV-RAPS/commits)
-[![Repo Size](https://img.shields.io/github/repo-size/dfeen87/HLV-RAPS)](https://github.com/dfeen87/HLV-RAPS)
-[![Code Size](https://img.shields.io/github/languages/code-size/dfeen87/HLV-RAPS)](https://github.com/dfeen87/HLV-RAPS)
-[![Top Language](https://img.shields.io/github/languages/top/dfeen87/HLV-RAPS)](https://github.com/dfeen87/HLV-RAPS)
-[![Maintained](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/dfeen87/HLV-RAPS/graphs/commit-activity)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
+
+
+
+
+
+
+
+
+
+
+
+
 
 *Powered by the Helix–Light–Vortex (HLV) Framework*
 
