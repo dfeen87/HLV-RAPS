@@ -296,8 +296,7 @@ with urllib.request.urlopen(f"{base_url}/health") as response:
 with urllib.request.urlopen(f"{base_url}/api/pdt") as response:
     pdt = json.loads(response.read())
     print(f"Confidence: {pdt['confidence']}")
-print(f"Status: {pdt['status']}")
-print(f"Status: {pdt['status']}")
+    print(f"Status: {pdt['status']}")
 ```
 
 ### JavaScript
