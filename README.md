@@ -103,6 +103,16 @@ A compact embedded ledger that supports:
 - anchoring roots (for post-flight audit integrity)
 - downlink mirroring (optional)
 
+### 5) REST API for Observability
+A lightweight read-only HTTP/JSON API for telemetry and monitoring:
+- observability-only (GET endpoints only, no control surfaces)
+- binds to 0.0.0.0:8080 for LAN-wide access
+- runs in dedicated thread (non-blocking to governance loop)
+- mutex-protected data access for thread safety
+- provides real-time snapshots of PDT, DSM, Supervisor, Rollback, ITL, and state
+
+See [`docs/REST_API.md`](docs/REST_API.md) for endpoint documentation and [`examples/api_client/`](examples/api_client/) for Python client example.
+
 ---
 
 ## “Flight-ready” engineering properties (what this repo targets)
@@ -134,7 +144,9 @@ This middleware is structured to support flight readiness workstreams:
 ## Repository map (high-level)
 
 ### Examples
-- `examples/hlv_demo/hlv_rtos_demo.cpp`
+- `examples/hlv_demo/hlv_rtos_demo.cpp` - RTOS demo harness
+- `examples/api_client/rest_api_demo.cpp` - REST API server demo
+- `examples/api_client/api_client.py` - Python REST API client
 
 ### Public headers (`include/`)
 - `include/apcu/advanced_propulsion_control_unit.hpp`
@@ -144,6 +156,8 @@ This middleware is structured to support flight readiness workstreams:
 - `include/hlv/spacetime_modulation_types.hpp`
 - `include/itl/itl_manager.hpp`
 - `include/platform/platform_hal.hpp`
+- `include/raps/api/api_snapshot.hpp` - REST API snapshot structures
+- `include/raps/api/rest_api_server.hpp` - REST API server
 - `include/raps/core/raps_core_types.hpp`
 - `include/raps/hlv/hlv_field_dynamics.hpp`
 - `include/raps/pdt/hlv_pdt_engine.hpp`
