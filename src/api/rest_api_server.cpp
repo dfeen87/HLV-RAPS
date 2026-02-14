@@ -73,7 +73,11 @@ bool RestApiServer::start(uint16_t port, const std::string& bind_addr) {
 
     // Set socket options
     int opt = 1;
-    ::setsockopt(server_socket_, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+    if (::setsockopt(server_socket_, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
+        ::close(server_socket_);
+        server_socket_ = -1;
+        return false;
+    }
 
     // Bind to address
     struct sockaddr_in addr{};
@@ -82,7 +86,11 @@ bool RestApiServer::start(uint16_t port, const std::string& bind_addr) {
     if (bind_addr == "0.0.0.0") {
         addr.sin_addr.s_addr = INADDR_ANY;
     } else {
-        ::inet_pton(AF_INET, bind_addr.c_str(), &addr.sin_addr);
+        if (::inet_pton(AF_INET, bind_addr.c_str(), &addr.sin_addr) <= 0) {
+            ::close(server_socket_);
+            server_socket_ = -1;
+            return false;
+        }
     }
 
     if (::bind(server_socket_, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
