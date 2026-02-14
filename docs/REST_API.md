@@ -278,21 +278,25 @@ curl http://192.168.1.100:8080/api/itl
 
 ### Python
 
-See `examples/api_client.py` for a complete Python client example.
+See `examples/api_client/api_client.py` for a complete Python client example using only the standard library.
 
 ```python
-import requests
+import urllib.request
+import json
 
 # Connect to API
 base_url = "http://192.168.1.100:8080"
 
 # Health check
-health = requests.get(f"{base_url}/health").json()
-print(f"Status: {health['status']}")
+with urllib.request.urlopen(f"{base_url}/health") as response:
+    health = json.loads(response.read())
+    print(f"Status: {health['status']}")
 
 # Get PDT predictions
-pdt = requests.get(f"{base_url}/api/pdt").json()
-print(f"Confidence: {pdt['confidence']}")
+with urllib.request.urlopen(f"{base_url}/api/pdt") as response:
+    pdt = json.loads(response.read())
+    print(f"Confidence: {pdt['confidence']}")
+print(f"Status: {pdt['status']}")
 print(f"Status: {pdt['status']}")
 ```
 

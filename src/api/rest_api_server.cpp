@@ -501,9 +501,9 @@ std::string RestApiServer::escape_json_string(const std::string& str) {
             case '\r': escaped << "\\r"; break;
             case '\t': escaped << "\\t"; break;
             default:
-                if (c >= 0 && c < 0x20) {
+                if (static_cast<unsigned char>(c) < 0x20) {
                     escaped << "\\u" << std::hex << std::setw(4) 
-                           << std::setfill('0') << static_cast<int>(c);
+                           << std::setfill('0') << static_cast<int>(static_cast<unsigned char>(c));
                 } else {
                     escaped << c;
                 }

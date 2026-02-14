@@ -25,8 +25,12 @@ public:
         // Mock state data
         snapshot.state.valid = true;
         snapshot.state.timestamp_ms = now;
-        snapshot.state.physics_state.position_m = {100000.0f, 50000.0f, 25000.0f};
-        snapshot.state.physics_state.velocity_m_s = {7000.0f, 500.0f, 100.0f};
+        snapshot.state.physics_state.position_m[0] = 100000.0f;
+        snapshot.state.physics_state.position_m[1] = 50000.0f;
+        snapshot.state.physics_state.position_m[2] = 25000.0f;
+        snapshot.state.physics_state.velocity_m_s[0] = 7000.0f;
+        snapshot.state.physics_state.velocity_m_s[1] = 500.0f;
+        snapshot.state.physics_state.velocity_m_s[2] = 100.0f;
         snapshot.state.physics_state.mass_kg = 50000.0f;
         snapshot.state.physics_state.timestamp_ms = now;
         
