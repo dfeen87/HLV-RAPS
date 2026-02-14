@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cstdint>
-#include "Hash256.hpp"
+#include "raps/core/raps_core_types.hpp"
 
 // =====================================================
 // Core Data Structures
