@@ -1,250 +1,438 @@
+<div align="center">
+
 # RAPS-HLV Flight Middleware
+
 **Advanced Safety & Predictive Intelligence Layer for Flight-Ready Systems**
 
-Powered by the **Helix–Light–Vortex (HLV)**
-**Authors:** Don Michael Feeney Jr. & Marcel Krüger  
-**License:** MIT
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![C++](https://img.shields.io/badge/C%2B%2B-17-blue.svg)](https://isocpp.org/)
 
-> **Important:** This repository is a **flight-safety architecture and reference implementation** intended for research, simulation, prototyping, and engineering development.  
-> It is **not certified** for operational flight use without a complete certification program (requirements, verification, validation, hardware qualification, and regulatory compliance).
+*Powered by the Helix–Light–Vortex (HLV) Framework*
 
----
+[Overview](#overview) •
+[Features](#key-features) •
+[Architecture](#architecture) •
+[Quick Start](#quick-start) •
+[Documentation](#documentation) •
+[Contributing](#contributing) •
+[Publications](#publications--references)
 
-## What this is
-
-HLV Flight Middleware is a **deterministic safety + predictive intelligence layer** designed to sit between a flight control computer (or avionics controller) and mission-critical subsystems (propulsion, power, thermal, actuation, guidance support tooling).
-
-It upgrades traditional “monitoring” into a **governed control loop**:
-
-- **Predict** what the system will do next (with uncertainty)
-- **Validate** proposed actions against hard safety envelopes
-- **Execute** only if safe (or enter fallback/rollback)
-- **Audit** everything immutably for traceability
-
-The system is built to support **flight-ready engineering practices**:
-determinism, bounded latency, safety gating, redundancy, rollback, and immutable telemetry.
+</div>
 
 ---
 
-## Why this is needed (flight readiness rationale)
+## ⚠️ Important Notice
 
-Modern aerospace systems fail in the margins:
-small deviations accumulate across thermal stress, fatigue, timing drift, sensor noise, and coupled subsystem dynamics.
+This repository provides a **flight-safety architecture and reference implementation** intended for:
+- Research and academic study
+- Simulation and prototyping
+- Engineering development and validation
 
-Traditional flight software often:
-- detects problems *after* thresholds are crossed
-- lacks predictive gating at the decision layer
-- provides logs that are hard to trust or reconstruct
-- has limited rollback/failover primitives
-
-HLV Flight Middleware is meant to close that gap by introducing:
-
-- **Predictive Digital Twin** (forecast + confidence/uncertainty)
-- **Deterministic Safety Monitor** (hard limits, independent checks)
-- **Governance loop** (sense → predict → validate → act → audit)
-- **Rollback + redundancy** (A/B supervisory + failover hooks)
-- **Immutable Telemetry Ledger (ITL)** (Merkle anchoring, auditable traces)
+**This software is NOT certified for operational flight use.** Production deployment requires a complete certification program including requirements traceability, verification, validation, hardware qualification, and regulatory compliance.
 
 ---
 
-## Core concept (dual-state modeling)
+## 📋 Table of Contents
+
+- [Overview](#overview)
+- [Why HLV-RAPS?](#why-hlv-raps)
+- [Key Features](#key-features)
+- [Core Concepts](#core-concepts)
+- [Architecture](#architecture)
+  - [Predictive Digital Twin (PDT)](#1-predictive-digital-twin-pdt)
+  - [Deterministic Safety Monitor (DSM)](#2-deterministic-safety-monitor-dsm)
+  - [RAPS Governance Loop](#3-raps-governance-loop-zero-trust-execution)
+  - [Immutable Telemetry Ledger (ITL)](#4-immutable-telemetry-ledger-itl)
+  - [REST API](#5-rest-api-for-observability)
+- [Quick Start](#quick-start)
+- [Repository Structure](#repository-structure)
+- [Documentation](#documentation)
+- [Testing & Validation](#testing--validation)
+  - [Software-in-the-Loop (SIL)](#software-in-the-loop-sil)
+  - [Hardware-in-the-Loop (HIL)](#hardware-in-the-loop-hil)
+- [Continuous Integration](#continuous-integration)
+- [Contributing](#contributing)
+- [Publications & References](#publications--references)
+- [Authors](#authors)
+- [License](#license)
+
+---
+
+## Overview
+
+**HLV Flight Middleware** is a deterministic safety and predictive intelligence layer designed to operate between flight control computers (or avionics controllers) and mission-critical subsystems such as propulsion, power management, thermal control, actuation, and guidance systems.
+
+### What It Does
+
+The middleware transforms traditional reactive monitoring into a **proactive governed control loop**:
+
+- 🔮 **Predict** — Forecast system behavior with uncertainty quantification
+- ✅ **Validate** — Verify proposed actions against hard safety envelopes
+- ⚡ **Execute** — Perform actions only when safe, with automatic fallback/rollback
+- 📝 **Audit** — Maintain immutable telemetry for complete traceability
+
+### Engineering Principles
+
+Built on **flight-ready engineering practices**:
+- ✓ Deterministic runtime behavior
+- ✓ Bounded execution latency
+- ✓ Multi-layer safety gating
+- ✓ Built-in redundancy support
+- ✓ Comprehensive rollback capabilities
+- ✓ Immutable telemetry ledger
+
+---
+
+## Why HLV-RAPS?
+
+Modern aerospace systems fail in the margins: small deviations accumulate across thermal stress, fatigue, timing drift, sensor noise, and coupled subsystem dynamics.
+
+### Traditional Flight Software Limitations
+
+- ❌ Detects problems **after** thresholds are crossed
+- ❌ Lacks predictive gating at the decision layer
+- ❌ Provides logs that are hard to trust or reconstruct
+- ❌ Has limited rollback/failover primitives
+
+### HLV-RAPS Solution
+
+HLV Flight Middleware closes this gap by introducing:
+
+- ✅ **Predictive Digital Twin** — Forecast with confidence/uncertainty estimation
+- ✅ **Deterministic Safety Monitor** — Hard limits with independent checks
+- ✅ **Governance Loop** — Sense → Predict → Validate → Act → Audit
+- ✅ **Rollback + Redundancy** — A/B supervisory control with failover hooks
+- ✅ **Immutable Telemetry Ledger (ITL)** — Merkle anchoring for auditable traces
+
+---
+
+## Key Features
+
+### 🛡️ Safety & Reliability
+
+- **Multi-layer safety validation** with independent monitors
+- **Automatic rollback** on execution failure or deviation
+- **Redundancy-ready** architecture with A/B supervisor support
+- **Fail-safe behavior** with fallback safe-state restoration
+
+### 🔮 Predictive Intelligence
+
+- **Digital twin forecasting** with uncertainty quantification
+- **Monte Carlo sampling** for risk assessment
+- **Online residual learning** hooks for adaptive behavior
+- **Early Safety Excursion (ESE)** signal prediction
+
+### 📊 Observability & Audit
+
+- **Immutable telemetry ledger** with Merkle anchoring
+- **REST API** for real-time monitoring (observability-only)
+- **Thread-safe data access** with mutex protection
+- **Post-flight audit integrity** verification
+
+### 🔧 Portability & Integration
+
+- **Platform HAL abstraction** for hardware independence
+- **RTOS mutex abstractions** for real-time systems
+- **Build-system agnostic** (CMake-friendly)
+- **Clear seams** for SIL/HIL testing
+
+---
+
+## Core Concepts
+
+### Dual-State Modeling
 
 The middleware models the system in two coupled layers:
 
-- **Physical state (Ψ):** classical metrics (voltage/current/temp/cycles/stress/position/velocity/etc.)
-- **Informational state (Φ):** entropy, degradation history, anomaly geometry, drift and coherence
+- **Physical State (Ψ)**: Classical metrics (voltage, current, temperature, cycles, stress, position, velocity, etc.)
+- **Informational State (Φ)**: Entropy, degradation history, anomaly geometry, drift, and coherence
+
+### Mathematical Framework
 
 Coupling is expressed through an effective metric:
 
-\[
-g_{\mu\nu}^{eff} = g_{\mu\nu} + \lambda (\partial_\mu \Phi)(\partial_\nu \Phi)
-\]
+```
+g_μν^eff = g_μν + λ (∂_μ Φ)(∂_ν Φ)
+```
 
-Practically: Φ acts as a *structured memory + distortion field* that influences how the middleware interprets “normal” evolution of Ψ, enabling earlier detection and better predictive safety gating.
+**Practical Interpretation**: Φ acts as a *structured memory + distortion field* that influences how the middleware interprets "normal" evolution of Ψ, enabling earlier detection and better predictive safety gating.
 
 ---
 
-## Architecture overview
+## Architecture
+
+### System Diagram
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Flight Controller                         │
+└───────────────────────────┬─────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────┐
+│                  HLV-RAPS Middleware                         │
+│  ┌──────────────┐  ┌──────────────┐  ┌─────────────────┐   │
+│  │ Predictive   │  │ Deterministic│  │   Governance    │   │
+│  │ Digital Twin │→ │    Safety    │→ │      Loop       │   │
+│  │    (PDT)     │  │  Monitor(DSM)│  │     (RAPS)      │   │
+│  └──────────────┘  └──────────────┘  └─────────────────┘   │
+│                                                              │
+│  ┌──────────────────────────────────────────────────────┐   │
+│  │      Immutable Telemetry Ledger (ITL)                │   │
+│  │           + REST API Server                          │   │
+│  └──────────────────────────────────────────────────────┘   │
+└───────────────────────────┬─────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────┐
+│   Mission-Critical Subsystems                                │
+│   (Propulsion, Power, Thermal, Actuation, Guidance)         │
+└─────────────────────────────────────────────────────────────┘
+```
 
 ### 1) Predictive Digital Twin (PDT)
-The PDT forecasts the near-future state under candidate commands/policies and produces:
-- predicted end state
-- confidence & uncertainty
-- predicted safety excursions (ESE) signals
 
-Key implementations in this repo include:
-- deterministic step simulation
-- Monte Carlo sampling (uncertainty estimation)
-- optional online residual learning hooks
+The PDT forecasts near-future system state under candidate commands/policies:
+
+**Outputs:**
+- Predicted end state
+- Confidence & uncertainty metrics
+- Predicted Early Safety Excursion (ESE) signals
+
+**Implementations:**
+- Deterministic step simulation
+- Monte Carlo sampling for uncertainty estimation
+- Optional online residual learning hooks
 
 ### 2) Deterministic Safety Monitor (DSM)
+
 An independent safety layer enforcing **inviolable bounds**.
-The DSM can demand:
-- rollback (safe abort)
-- full shutdown (catastrophic prevention)
-- safe-state restore
 
-DSM is intentionally simple, conservative, and suitable for separation on independent compute/sensor channels.
+**Capabilities:**
+- Demand rollback (safe abort)
+- Force full shutdown (catastrophic prevention)
+- Restore safe-state
 
-### 3) RAPS Governance Loop (Zero-trust execution)
-A deterministic orchestrator that runs:
+**Design Philosophy**: Intentionally simple, conservative, and suitable for separation on independent compute/sensor channels.
 
-1. **SENSE & AUDIT**: snapshot + commit to ITL  
-2. **PREDICT & PLAN**: generate candidate policies  
-3. **VALIDATE**: AILEE safety gates + DSM checks  
-4. **EXECUTE**: idempotent actuator transaction  
-5. **ROLLBACK**: if execution fails or integrity breaks  
-6. **AUDIT**: immutable telemetry + Merkle anchoring
+### 3) RAPS Governance Loop (Zero-Trust Execution)
+
+A deterministic orchestrator implementing:
+
+1. **SENSE & AUDIT** — Snapshot + commit to ITL
+2. **PREDICT & PLAN** — Generate candidate policies
+3. **VALIDATE** — AILEE safety gates + DSM checks
+4. **EXECUTE** — Idempotent actuator transaction
+5. **ROLLBACK** — If execution fails or integrity breaks
+6. **AUDIT** — Immutable telemetry + Merkle anchoring
 
 ### 4) Immutable Telemetry Ledger (ITL)
-A compact embedded ledger that supports:
-- event commits
-- Merkle batching
-- anchoring roots (for post-flight audit integrity)
-- downlink mirroring (optional)
+
+A compact embedded ledger providing:
+
+- Event commits with cryptographic hashing
+- Merkle batching for efficient verification
+- Root anchoring for post-flight audit integrity
+- Optional downlink mirroring
 
 ### 5) REST API for Observability
-A lightweight read-only HTTP/JSON API for telemetry and monitoring:
-- observability-only (GET endpoints only, no control surfaces)
-- binds to 0.0.0.0:8080 for LAN-wide access
-- runs in dedicated thread (non-blocking to governance loop)
-- mutex-protected data access for thread safety
-- provides real-time snapshots of PDT, DSM, Supervisor, Rollback, ITL, and state
 
-See [`docs/REST_API.md`](docs/REST_API.md) for endpoint documentation and [`examples/api_client/`](examples/api_client/) for Python client example.
+A lightweight read-only HTTP/JSON API:
 
----
+- **Observability-only** (GET endpoints, no control surfaces)
+- **Network accessible** (binds to 0.0.0.0:8080)
+- **Non-blocking** (dedicated thread, mutex-protected)
+- **Real-time snapshots** of PDT, DSM, Supervisor, Rollback, ITL, and state
 
-## “Flight-ready” engineering properties (what this repo targets)
-
-This middleware is structured to support flight readiness workstreams:
-
-- **Deterministic runtime behavior**
-  - fixed-cycle governance loop
-  - bounded execution budgets (WATCHDOG_MS)
-- **Fail-safe behavior**
-  - rollback plans, fallback safe-state, emergency actions
-- **Redundancy readiness**
-  - supervisor-level A/B control hooks
-  - prediction mismatch detection scaffolding
-- **Auditability**
-  - immutable event ledger
-  - Merkle anchoring for tamper-evidence
-- **Portability**
-  - platform HAL abstraction
-  - RTOS mutex abstraction points
-- **Testability**
-  - demo harness + reference implementations
-  - clear seams for simulation and HIL
-
-> Certification still requires: requirements traceability, exhaustive testing, timing analysis, platform qualification, tool qualification, independent V&V, and regulatory compliance planning.
+📖 **Documentation**: See [`docs/REST_API.md`](docs/REST_API.md) for endpoint details and [`examples/api_client/`](examples/api_client/) for Python client examples.
 
 ---
 
-## Repository map (high-level)
+## Quick Start
 
-### Examples
-- `examples/hlv_demo/hlv_rtos_demo.cpp` - RTOS demo harness
-- `examples/api_client/rest_api_demo.cpp` - REST API server demo
-- `examples/api_client/api_client.py` - Python REST API client
+### Prerequisites
 
-### Public headers (`include/`)
-- `include/apcu/advanced_propulsion_control_unit.hpp`
-- `include/config/raps_safety_limits.hpp`
-- `include/core/raps_definitions.hpp`
-- `include/hlv/hlv_constants.hpp`
-- `include/hlv/spacetime_modulation_types.hpp`
-- `include/itl/itl_manager.hpp`
-- `include/platform/platform_hal.hpp`
-- `include/raps/api/api_snapshot.hpp` - REST API snapshot structures
-- `include/raps/api/rest_api_server.hpp` - REST API server
-- `include/raps/core/raps_core_types.hpp`
-- `include/raps/hlv/hlv_field_dynamics.hpp`
-- `include/raps/pdt/hlv_pdt_engine.hpp`
-- `include/raps/platform/rtos_mutex.hpp`
-- `include/raps/safety/deterministic_safety_monitor.hpp`
-- `include/raps/safety/safety_monitor.hpp`
-- `include/raps/supervisor/redundant_supervisor.hpp`
-- `include/raps/supervisor/supervisor_failure_strings.hpp`
+- **C++ Compiler** with C++17 support (GCC 7+, Clang 5+, MSVC 2017+)
+- **CMake** 3.10 or higher
+- **Build Tools** (make, ninja, or platform equivalent)
 
-### Reference material
-- `reference/python/hlv_reference_integrator.hpp`
+### Building the Demo
 
-### Source (`src/`)
-- Control
-  - `src/control/pid_controller.hpp`
-- HLV subsystem modules
-  - `src/hlv/artificial_gravity_control.hpp`
-  - `src/hlv/capability_scaling.hpp`
-  - `src/hlv/derived_gravity_model.hpp`
-  - `src/hlv/derived_time_dilation_model.hpp`
-  - `src/hlv/efficiency_and_displacement.hpp`
-  - `src/hlv/field_coupling_stress_model.hpp`
-  - `src/hlv/gravito_flux_control.hpp`
-  - `src/hlv/power_and_resource_management.hpp`
-  - `src/hlv/power_draw_model.hpp`
-  - `src/hlv/resonance_detection.hpp`
-  - `src/hlv/resonance_suppression.hpp`
-  - `src/hlv/resource_consumption.hpp`
-  - `src/hlv/spacetime_curvature_dynamics.hpp`
-  - `src/hlv/spacetime_curvature_model.hpp`
-  - `src/hlv/subspace_efficiency.hpp`
-  - `src/hlv/subspace_efficiency_model.hpp`
-  - `src/hlv/time_dilation_control.hpp`
-  - `src/hlv/warp_field_control.hpp`
-- ITL primitives
-  - `src/itl/itl_ailee_status.hpp`
-  - `src/itl/itl_command_events.hpp`
-  - `src/itl/itl_entry_hashing.hpp`
-  - `src/itl/itl_merkle_anchor_entry.hpp`
-  - `src/itl/itl_payload_sizing.hpp`
-  - `src/itl/itl_state_snapshot.hpp`
-  - `src/itl/merkle_root.hpp`
-  - `src/itl/merkle_utils.hpp`
-- Physics
-  - `src/physics/propulsion_physics_engine.cpp`
-  - `src/physics/PropulsionPhysicsEngine.cpp` *(if both exist, keep one canonical and deprecate the other)*
-  - `src/physics/nominal_control.hpp`
-  - `src/physics/policy_to_control_input.hpp`
-- RAPS governance & safety
-  - `src/raps/rollback_execution.hpp`
-  - `src/raps/rollback_store.hpp`
-  - `src/raps/state_hashing.hpp`
-  - `src/raps/stability_and_authority_metrics.hpp`
-  - `src/raps/apcu_state_management_and_safety.hpp`
-  - `src/raps/safety/ailee_confidence_classification.hpp`
-- Supervisor
-  - `src/supervisor/prediction_mismatch_policy.hpp`
-  - `src/supervisor/supervisor_failure_strings.hpp`
+```bash
+# Clone the repository
+git clone https://github.com/dfeen87/HLV-RAPS.git
+cd HLV-RAPS
+
+# Build the Software-in-the-Loop (SIL) test harness
+cmake -S tests/sil -B build
+cmake --build build
+
+# Run tests
+ctest --test-dir build --output-on-failure
+```
+
+### Running the RTOS Demo
+
+```bash
+# Build and run the RTOS demonstration
+# (Adjust toolchain/platform as needed for your target)
+./build/hlv_rtos_demo
+```
+
+### Running the REST API Server
+
+```bash
+# Build and run the API server demo
+./build/rest_api_demo
+
+# In another terminal, access the API
+curl http://localhost:8080/api/status
+```
+
+📖 **For detailed build instructions**, see the repository documentation in `docs/`.
 
 ---
 
-## Quickstart (demo build/run)
+## Repository Structure
 
-This repo is designed to be build-system agnostic (CMake-friendly) and RTOS-portable via `PlatformHAL` + `rtos_mutex` seams.
+```
+HLV-RAPS/
+├── docs/                           # Documentation
+│   ├── REST_API.md                # REST API endpoint reference
+│   ├── architecture.md            # Detailed architecture guide
+│   ├── sil_hil.md                # SIL/HIL testing documentation
+│   └── verification.md           # Verification approach
+│
+├── examples/                       # Example applications
+│   ├── hlv_demo/                  # RTOS demonstration
+│   └── api_client/                # REST API client examples
+│
+├── include/                        # Public API headers
+│   ├── apcu/                      # Advanced Propulsion Control Unit
+│   ├── config/                    # Configuration and safety limits
+│   ├── core/                      # Core definitions and types
+│   ├── hlv/                       # HLV framework headers
+│   ├── itl/                       # Immutable Telemetry Ledger
+│   ├── platform/                  # Platform abstraction layer
+│   └── raps/                      # RAPS core components
+│       ├── api/                   # REST API interfaces
+│       ├── core/                  # RAPS core types
+│       ├── hlv/                   # HLV field dynamics
+│       ├── pdt/                   # Predictive Digital Twin
+│       ├── platform/              # RTOS abstractions
+│       ├── safety/                # Safety monitors
+│       └── supervisor/            # Redundant supervisor
+│
+├── src/                            # Implementation sources
+│   ├── control/                   # Control algorithms
+│   ├── hlv/                       # HLV subsystem modules
+│   ├── itl/                       # ITL primitives
+│   ├── physics/                   # Physics engines
+│   ├── raps/                      # RAPS implementation
+│   └── supervisor/                # Supervisor logic
+│
+├── tests/                          # Test infrastructure
+│   └── sil/                       # Software-in-the-Loop tests
+│
+├── tools/                          # Development tools
+├── reference/                      # Reference implementations
+│
+├── LICENSE                         # MIT License
+└── README.md                       # This file
+```
 
-Typical flow:
-1. Build your target (host demo or embedded toolchain)
-2. Run the RTOS demo harness:
-   - `examples/hlv_demo/hlv_rtos_demo.cpp`
+### Key Components
 
-> If you want, add a `docs/BUILD.md` with exact commands for your CMake layout and CI runners.
+| Directory | Description |
+|-----------|-------------|
+| `include/raps/pdt/` | Predictive Digital Twin engine |
+| `include/raps/safety/` | Deterministic Safety Monitor |
+| `include/raps/supervisor/` | Redundant supervisor and failover |
+| `include/itl/` | Immutable Telemetry Ledger |
+| `include/raps/api/` | REST API server and snapshots |
+| `src/hlv/` | HLV subsystem modules (gravity control, time dilation, etc.) |
+| `examples/hlv_demo/` | RTOS demonstration harness |
+| `tests/sil/` | Software-in-the-Loop test suite |
+
+---
+
+## Documentation
+
+Comprehensive documentation is available in the [`docs/`](docs/) directory:
+
+| Document | Description |
+|----------|-------------|
+| [`architecture.md`](docs/architecture.md) | Detailed system architecture and design |
+| [`REST_API.md`](docs/REST_API.md) | REST API endpoint reference |
+| [`sil_hil.md`](docs/sil_hil.md) | SIL/HIL testing methodology |
+| [`verification.md`](docs/verification.md) | Verification and validation approach |
+| [`operational_notes.md`](docs/operational_notes.md) | Operational considerations |
+
+---
+
+## Testing & Validation
+
+RAPS is designed to be **flight-ready by construction**, not by late-stage testing. The repository includes first-class SIL and HIL infrastructure.
+
+### Software-in-the-Loop (SIL)
+
+**Purpose**: Deterministic, CI-friendly execution environment for the full RAPS control, prediction, and safety pipeline.
+
+**Key Capabilities**:
+- ✓ PlatformHAL SIL backend (target-agnostic stubs)
+- ✓ Compile-time fault injection (actuator failures, flash errors, latency spikes)
+- ✓ Deterministic execution mode (reproducible test runs)
+- ✓ Coverage gates (rollback paths, failover, safety monitor responses)
+
+**Running SIL Tests**:
+
+```bash
+cmake -S tests/sil -B build
+cmake --build build
+ctest --test-dir build --output-on-failure
+```
+
+**Why It Matters**: Validates governance logic, catches race conditions and rollback bugs early, makes safety behavior auditable and repeatable.
+
+### Hardware-in-the-Loop (HIL)
+
+**Purpose**: Validate software assumptions against real hardware, timing, and actuator constraints.
+
+**Key Capabilities**:
+- ✓ HIL-backed PlatformHAL (hardware/rig-server implementation)
+- ✓ Rig-driven actuator validation
+- ✓ Downlink and telemetry verification
+- ✓ One-shot readiness check (`examples/hil/hil_readiness_check.cpp`)
+
+**Why It Matters**: Proves software can survive real latencies and failures, prevents "it worked in simulation" surprises.
+
+### Unified Design Philosophy
+
+SIL and HIL are **link-time personalities** of the same system:
+- Same governance logic runs in SIL, HIL, and flight
+- Safety and rollback behavior validated before certification
+- Flight builds simply replace PlatformHAL backend with certified drivers
+
+This enables seamless progression: **Research → Simulation → Hardware → Flight** without rewriting core logic.
 
 ---
 
 ## Continuous Integration
 
-CI provides a fast, deterministic check for build correctness and core simulation invariants.
+### What CI Validates
 
-**What CI checks**
-- Configures and builds the SIL test harness (CMake).
-- Runs the SIL fault-injection smoke tests to validate deterministic safety behavior.
+- ✓ Configures and builds the SIL test harness
+- ✓ Runs fault-injection smoke tests
+- ✓ Validates deterministic safety behavior
 
-**What CI intentionally does not check**
-- Hardware-in-the-loop (HIL) or physical testbed validation.
-- Integration tests that depend on external infrastructure or network services.
+### What CI Does NOT Check
 
-**Reproduce CI locally**
+- Hardware-in-the-Loop (HIL) validation
+- Physical testbed integration
+- Network-dependent external services
+
+### Reproducing CI Locally
+
 ```bash
 cmake -S tests/sil -B build
 cmake --build build
@@ -253,123 +441,115 @@ ctest --test-dir build --output-on-failure
 
 ---
 
-## Operational flow (how it behaves)
+## Contributing
 
-1. **Snapshot** current state (Ψ) and derived informational health state (Φ)
-2. **Predict** forward (PDT) → produce (state, confidence, uncertainty)
-3. If risk is detected:
-   - generate candidate policies (APE)
-   - validate via AILEE + DSM
-4. **Execute** via idempotent actuator transaction
-5. If execution fails or deviates:
-   - **rollback** immediately using stored rollback plan
-6. **Commit** every step to ITL and anchor Merkle batches
+We welcome contributions! This project is MIT licensed and open to:
 
----
-## Software-in-the-Loop (SIL) & Hardware-in-the-Loop (HIL)
+- 🔍 **Audits and reviews** — Security, safety, and code quality
+- 🛡️ **Safety envelope expansions** — Additional safety constraints and validation
+- 🔧 **Portability improvements** — RTOS/HAL adaptations for new platforms
+- 🧪 **Test harnesses** — SIL/HIL test scenarios and coverage expansion
+- 📚 **Documentation** — Guides, diagrams, tutorials, and specification alignment
+- 🐛 **Bug reports and fixes** — Issue reporting and resolution
 
-RAPS is designed to be **flight-ready by construction**, not by late-stage testing.  
-To support this, the repository now includes **first-class SIL and HIL infrastructure** that allows the entire governance, safety, and prediction stack to be exercised *before* deployment on real hardware.
+### How to Contribute
 
----
+1. **Fork** the repository
+2. **Create** a feature branch (`git checkout -b feature/amazing-feature`)
+3. **Commit** your changes (`git commit -m 'Add amazing feature'`)
+4. **Push** to the branch (`git push origin feature/amazing-feature`)
+5. **Open** a Pull Request
 
-### Software-in-the-Loop (SIL)
+### Guidelines
 
-The SIL layer provides a **deterministic, CI-friendly execution environment** that runs the full RAPS control, prediction, and safety pipeline on a host machine.
-
-**Key capabilities**
-- **PlatformHAL SIL backend**  
-  Target-agnostic stubs for time, flash, actuation, telemetry, and metrics.
-- **Compile-time fault injection**  
-  Controlled via build flags to simulate actuator failures, flash errors, latency spikes, and downlink loss.
-- **Deterministic execution mode**  
-  Enables reproducible test runs for CI, regression testing, and safety validation.
-- **Coverage gates**  
-  Explicit pass/fail gates ensure that:
-  - rollback paths are exercised,
-  - supervisor failover is triggered,
-  - safety monitors observe and respond to injected faults.
-
-**Why it matters**
-- Validates *governance logic*, not just math.
-- Catches race conditions and rollback bugs early.
-- Makes safety behavior auditable and repeatable.
+- Follow existing code style and conventions
+- Add tests for new features
+- Update documentation as needed
+- Ensure all tests pass before submitting PR
+- Provide clear commit messages and PR descriptions
 
 ---
 
-### Hardware-in-the-Loop (HIL)
+## Publications & References
 
-The HIL layer bridges RAPS to **real hardware or a physical test rig**, validating that software assumptions hold under real timing, transport, and actuator constraints.
+### Primary Documentation
 
-**Key capabilities**
-- **HIL-backed PlatformHAL**  
-  The same interface used in SIL, but linked against a hardware or rig-server implementation.
-- **Rig-driven actuator validation**  
-  Confirms idempotent command execution, timeout handling, and transaction safety.
-- **Downlink and telemetry verification**  
-  Ensures ground-facing observability paths are alive and correctly routed.
-- **One-shot readiness executable**  
-  `examples/hil/hil_readiness_check.cpp` provides a fast, binary “go / no-go” signal for:
-  - timing,
-  - hashing,
-  - flash access,
-  - actuation,
-  - downlink.
+**RAPS Foundational Document + Part II (HLV Physics Math Implementation)**
+- [AI-Augmented Rigor: A Zero-Trust Governance Architecture](https://dfeen.substack.com/p/ai-augmented-rigor-a-zero-trust-governance)
 
-**Why it matters**
-- Proves the software can survive *real* latencies and failures.
-- Prevents “it worked in simulation” surprises.
-- Provides a clean handoff from lab validation to flight integration.
+### Academic Publications
 
----
+**Preprint: Gaussian Vacuum Solitons, Spiral-Time HLV Dynamics, RAPS Coherence Architecture**
+- [Zenodo Record 17848351](https://zenodo.org/records/17848351)
 
-### Unified Design Philosophy
+**Book Download**
+- [Zenodo Record 17849083](https://zenodo.org/records/17849083)
 
-SIL and HIL are not separate code paths — they are **link-time personalities** of the same system.
+### Citation
 
-- The **same governance logic** runs in SIL, HIL, and flight.
-- Safety and rollback behavior is validated *before* certification.
-- Flight builds simply replace the PlatformHAL backend with certified hardware drivers.
+If you use this work in academic research, please cite:
 
-This approach enables RAPS to move from research → simulation → hardware → flight **without rewriting core logic**, preserving correctness, traceability, and safety guarantees at every stage.
+```bibtex
+@software{hlv_raps_2025,
+  author = {Feeney Jr., Don Michael and Krüger, Marcel},
+  title = {RAPS-HLV Flight Middleware: Advanced Safety \& Predictive Intelligence Layer},
+  year = {2025},
+  publisher = {GitHub},
+  url = {https://github.com/dfeen87/HLV-RAPS}
+}
+```
 
 ---
 
-## Collaboration
+## Authors
 
-This project is MIT licensed and welcomes:
-- audits and reviews
-- safety envelope expansions
-- portability improvements (RTOS/HAL)
-- test harnesses (SIL/HIL)
-- documentation, diagrams, and spec alignment
+**Don Michael Feeney Jr.**
+- Email: dfeen87@gmail.com
+- Primary architect and developer
 
----
+**Marcel Krüger**
+- Co-author and contributor
 
-## Publications / References
+### Acknowledgments
 
-RAPS Foundational Document + Part II (HLV Physics Math Implementation):
-
-https://dfeen.substack.com/p/ai-augmented-rigor-a-zero-trust-governance
-
-Preprint (Gaussian Vacuum Solitons, Spiral-Time HLV Dynamics, RAPS Coherence Architecture):
-
-https://zenodo.org/records/17848351
-
-Book download (Zenodo record):
-
-https://zenodo.org/records/17849083
+This project builds upon research in aerospace safety systems, predictive control, and flight middleware architectures. We thank the broader aerospace and computer science communities for their foundational work.
 
 ---
 
-Contact
+## License
 
-Don Michael Feeney Jr.
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
 
-dfeen87@gmail.com
-
----
-
-License
-
+```
 MIT License
+
+Copyright (c) 2025 Don Michael Feeney Jr
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+---
+
+<div align="center">
+
+**[⬆ Back to Top](#raps-hlv-flight-middleware)**
+
+Made with ❤️ for flight safety and aerospace innovation
+
+</div>
