@@ -93,3 +93,39 @@ add_test(
     NAME raps_sil_fault_injection
     COMMAND raps_sil_fault_tests
 )
+
+# ------------------------------------------------------------
+# Rollback Execution Tests
+# ------------------------------------------------------------
+
+add_executable(raps_sil_rollback_tests
+    test_rollback_execution.cpp
+    ../../src/platform/platform_hal.cpp
+)
+
+target_include_directories(raps_sil_rollback_tests PRIVATE
+    ${PROJECT_SOURCE_DIR}/../../include
+    ${PROJECT_SOURCE_DIR}/../../src
+)
+
+if (RAPS_ENABLE_SIL_FAULTS)
+    target_compile_definitions(raps_sil_rollback_tests PRIVATE
+        RAPS_ENABLE_SIL_FAULTS=1
+    )
+endif()
+
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    target_compile_options(raps_sil_rollback_tests PRIVATE
+        -Wall
+        -Wextra
+        -Wpedantic
+        -Wshadow
+        -Wconversion
+        -Wno-unused-parameter
+    )
+endif()
+
+add_test(
+    NAME raps_sil_rollback_test
+    COMMAND raps_sil_rollback_tests
+)
