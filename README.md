@@ -10,19 +10,6 @@
 [![CMake](https://img.shields.io/badge/CMake-3.10+-064F8C.svg)](https://cmake.org/)
 [![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20RTOS-lightgrey.svg)](https://github.com/dfeen87/HLV-RAPS)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 *Powered by the Helix–Light–Vortex (HLV) Framework*
 
 [Overview](#overview) •
@@ -532,6 +519,8 @@ If you use this work in academic research, please cite:
 ### Acknowledgments
 
 This project builds upon research in aerospace safety systems, predictive control, and flight middleware architectures. We thank the broader aerospace and computer science communities for their foundational work.
+
+I would like to acknowledge **Microsoft Copilot**, **Anthropic Claude**, **Google Jules**, and **OpenAI ChatGPT** for their meaningful assistance in refining concepts, improving clarity, and strengthening the overall quality of this code.
 
 ---
 
