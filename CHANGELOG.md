@@ -2,7 +2,7 @@
 
 All notable changes to HLV-RAPS are documented in this file.
 
-## [3.4.0] - 2026-03-04
+## [3.2.0] - 2026-03-04
 
 ### Security
 - Fix division-by-zero in power & resource management when `elapsed_ms == 0`
