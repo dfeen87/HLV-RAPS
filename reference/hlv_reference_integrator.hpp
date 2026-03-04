@@ -48,6 +48,11 @@
 //
 ═══════════════════════════════════════════════════════
 ════════════════════════
+// ⚠️ REFERENCE ONLY — This file is a standalone amalgamation for review/documentation.
+// DO NOT include in production builds. Use the modular headers under include/.
+#ifdef RAPS_PRODUCTION_BUILD
+#error "Do not include hlv_reference_integrator.hpp in production builds."
+#endif
 #ifndef HLV_PDT_ENGINE_HPP
 #define HLV_PDT_ENGINE_HPP
 #include <vector>

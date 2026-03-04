@@ -10,7 +10,12 @@ inline void store_rollback_plan(
     const Policy& safe_fallback_policy) {
 
     if (rollback_count >= RAPSConfig::MAX_ROLLBACK_STORE) {
-        rollback_count = 0; // overwrite oldest
+        PlatformHAL::metric_emit("safety.rollback_store_full", 1.0f);
+        // Evict oldest entry by shifting to make room for new entry
+        for (size_t i = 1; i < RAPSConfig::MAX_ROLLBACK_STORE; ++i) {
+            rollback_store[i - 1] = rollback_store[i];
+        }
+        rollback_count = static_cast<uint32_t>(RAPSConfig::MAX_ROLLBACK_STORE) - 1;
     }
 
     RollbackPlan plan{};

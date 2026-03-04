@@ -25,8 +25,9 @@ inline float compute_field_coupling_stress(
         (D - 1.0f) *
         COUPLING_STRESS_EXPONENT_SCALAR;
 
-    float coupling_stress =
-        std::exp(stress_term * stability_penalty_factor) - 1.0f;
+    constexpr float MAX_EXP_ARG = 20.0f; // exp(20) ≈ 4.85e8, already extreme stress
+    float clamped_arg = std::min(stress_term * stability_penalty_factor, MAX_EXP_ARG);
+    float coupling_stress = std::exp(clamped_arg) - 1.0f;
 
     return std::max(0.0f, coupling_stress);
 }

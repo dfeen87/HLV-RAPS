@@ -13,9 +13,11 @@ inline void update_power_and_resources(
 
     // Power Draw & Resource Consumption (Section 7)
 
+    // Guard against zero-time delta to prevent division by zero (startup/rollover)
+    float dt_ms = static_cast<float>(std::max(elapsed_ms, uint64_t{1}));
     state.power_draw_GW = compute_power_draw(
-        warp_change_request / static_cast<float>(elapsed_ms),
-        flux_change_request / static_cast<float>(elapsed_ms)
+        warp_change_request / dt_ms,
+        flux_change_request / dt_ms
     );
 
     // Apply effective power budget (constrained by resource capability)

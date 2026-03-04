@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cstring>
 #include <cmath>
+#include "safety/state_sanitizer.hpp"
 
 class AdvancedPropulsionControlUnit {
 
@@ -62,6 +63,15 @@ inline void AdvancedPropulsionControlUnit::update_diagnostics_and_safety(
 
     current_propulsion_state_.emergency_mode_active =
         emergency_mode_active_;
+
+    // NaN/Inf state sanitization: detect corrupted state before proceeding
+    if (!sanitize_spacetime_state(current_propulsion_state_)) {
+        PlatformHAL::metric_emit("apcu.nan_inf_detected", 1.0f);
+        if (!emergency_mode_active_) {
+            enter_emergency_mode();
+        }
+        return; // Do not proceed with corrupted state
+    }
 
     // 10. State Management & Safety
     current_propulsion_state_.timestamp_ms += elapsed_ms;

@@ -5,9 +5,9 @@
 #include <cstring>
 
 // Core types / constants should be declared elsewhere and included here.
-#include "SpacetimeModulationTypes.hpp"   // SpacetimeModulationState, Command, constants
-#include "PlatformHAL.hpp"               // now_ms(), metric_emit(), sha256(), etc.
-#include "Hash256.hpp"
+#include "hlv/spacetime_modulation_types.hpp"   // SpacetimeModulationState, Command, constants
+#include "platform/platform_hal.hpp"            // now_ms(), metric_emit(), sha256(), etc.
+#include "raps/core/raps_core_types.hpp"        // Hash256 and other core types
 
 class AdvancedPropulsionControlUnit {
 public:

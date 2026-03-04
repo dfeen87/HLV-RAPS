@@ -127,3 +127,14 @@ struct RollbackPlan {
     Hash256 rollback_hash;
     bool valid;
 };
+
+// =====================================================
+// Version
+// =====================================================
+
+namespace RAPSVersion {
+    constexpr uint32_t MAJOR = 2;
+    constexpr uint32_t MINOR = 4;
+    constexpr uint32_t PATCH = 0;
+    constexpr const char* STRING = "2.4.0";
+}
