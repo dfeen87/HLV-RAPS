@@ -36,6 +36,14 @@ int main(int argc, char** argv) {
 
   char buf[8192];
   while (std::fgets(buf, sizeof(buf), f)) {
+    size_t len = std::strlen(buf);
+    if (len > 0 && buf[len - 1] != '\n') {
+      // Line was truncated; skip remainder to avoid corrupting counters
+      int c;
+      while ((c = std::fgetc(f)) != '\n' && c != EOF) {}
+      std::fprintf(stderr, "warning: truncated line at record %llu\n",
+                   (unsigned long long)total);
+    }
     ++total;
 
     if (contains(buf, "\"type\":\"telemetry_summary\"")) {

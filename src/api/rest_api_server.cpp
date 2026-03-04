@@ -5,6 +5,8 @@
 #include <iomanip>
 #include <algorithm>
 
+#include "raps/core/raps_core_types.hpp"
+
 // POSIX sockets
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -16,10 +18,15 @@ namespace raps::api {
 
 namespace {
 
+// Maximum HTTP request size in bytes — protects against oversized/malformed requests
+constexpr size_t MAX_REQUEST_SIZE = 8192;
+
 // HTTP response templates
 constexpr const char* HTTP_200_HEADER = 
     "HTTP/1.1 200 OK\r\n"
     "Content-Type: application/json\r\n"
+    // Access-Control-Allow-Origin: * is intentional for an internal-only observability API.
+    // RISK ACCEPTED: This server must only be bound to a loopback/trusted interface.
     "Access-Control-Allow-Origin: *\r\n"
     "Connection: close\r\n"
     "Content-Length: ";
@@ -177,11 +184,18 @@ void RestApiServer::server_thread_main() {
 }
 
 void RestApiServer::handle_client(int client_sock) {
-    // Read request
-    char buffer[4096];
-    ssize_t bytes_read = ::recv(client_sock, buffer, sizeof(buffer) - 1, 0);
+    // Read request with size limit to prevent oversized/malicious requests
+    char buffer[MAX_REQUEST_SIZE + 1];
+    ssize_t bytes_read = ::recv(client_sock, buffer, MAX_REQUEST_SIZE, 0);
     
     if (bytes_read <= 0) {
+        return;
+    }
+
+    // Reject requests that exceed the size limit
+    if (static_cast<size_t>(bytes_read) >= MAX_REQUEST_SIZE) {
+        std::string rejection = json_error(413, "Request Too Large");
+        ::send(client_sock, rejection.c_str(), rejection.length(), 0);
         return;
     }
     
@@ -235,7 +249,7 @@ std::string RestApiServer::handle_health() {
     json << "{"
          << "\"status\":\"ok\","
          << "\"service\":\"HLV-RAPS Flight Middleware\","
-         << "\"api_version\":\"1.0\","
+         << "\"api_version\":\"" << RAPSVersion::STRING << "\","
          << "\"observability_only\":true"
          << "}";
     

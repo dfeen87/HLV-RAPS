@@ -10,6 +10,8 @@
 #include <numeric>
 #include <iostream>
 
+#include "hlv/hlv_constants.hpp"
+
 // =====================================================
 // HLV Framework Mathematical Constants
 // =====================================================
@@ -31,14 +33,10 @@ constexpr float TCC_COUPLING_J         = 0.25f;
 // RAPS System Constants
 // =====================================================
 
-constexpr float MAX_WARP_FIELD_STRENGTH = 10.0f;
 constexpr float MAX_FLUX_BIAS           = 5.0f;
-constexpr float ANTIMATTER_BURN_RATE_GW_TO_KG_PER_MS = 1e-6f;
-
-struct RAPSConfig {
-    static constexpr float CRITICAL_ANTIMATTER_KG          = 5.0f;
-    static constexpr float EMERGENCY_ANTIMATTER_RESERVE_KG = 20.0f;
-};
+// MAX_WARP_FIELD_STRENGTH and ANTIMATTER_BURN_RATE_GW_TO_KG_PER_MS
+// are defined in include/hlv/hlv_constants.hpp — do not redefine here.
+// RAPSConfig safety thresholds are defined in include/config/raps_safety_limits.hpp.
 
 // =====================================================
 // HLV Triadic Time

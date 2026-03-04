@@ -32,9 +32,9 @@ inline void update_artificial_gravity_control(
         gravity_pid_output * capability_scale * response_scale;
 
     gravity_change = std::max(
-        -GRAVITY_RESPONSE_RATE_PER_MS * elapsed_ms,
+        -GRAVITY_RESPONSE_RATE_PER_MS * static_cast<float>(elapsed_ms),
         std::min(
-            GRAVITY_RESPONSE_RATE_PER_MS * elapsed_ms,
+            GRAVITY_RESPONSE_RATE_PER_MS * static_cast<float>(elapsed_ms),
             gravity_change
         )
     );

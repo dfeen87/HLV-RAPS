@@ -11,26 +11,21 @@ inline float compute_pid_output(
     float ki,
     float kd,
     float integral_limit,
-    float elapsed_ms) {
+    uint64_t elapsed_ms) {
 
-    // Integral term with anti-windup
-    float dt_s = 0.0f;
-    if (elapsed_ms > 0.0f) {
-        dt_s = elapsed_ms / 1000.0f;
+    if (elapsed_ms == 0) {
+        // Zero-time tick: return proportional-only to avoid division by zero
+        return kp * error;
     }
+    float dt_s = static_cast<float>(elapsed_ms) / 1000.0f;
 
-    if (dt_s > 0.0f) {
-        integral += error * dt_s;
-        integral = std::max(
-            -integral_limit,
-            std::min(integral_limit, integral)
-        );
-    }
+    integral += error * dt_s;
+    integral = std::max(
+        -integral_limit,
+        std::min(integral_limit, integral)
+    );
 
-    float derivative = 0.0f;
-    if (dt_s > 0.0f) {
-        derivative = (error - previous_error) / dt_s;
-    }
+    float derivative = (error - previous_error) / dt_s;
 
     float output =
         (kp * error) +

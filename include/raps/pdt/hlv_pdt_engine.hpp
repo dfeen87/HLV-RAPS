@@ -36,6 +36,14 @@ public:
         uint32_t horizon_ms,
         uint32_t monte_carlo_runs
     ) {
+        if (monte_carlo_runs == 0) {
+            PredictionResult result{};
+            result.status = PredictionResult::Status::INVALID;
+            result.confidence = 0.0f;
+            result.uncertainty = 1.0f;
+            return result;
+        }
+
         std::vector<float> final_warp;
         std::vector<float> final_curvature;
         std::vector<float> final_stability;

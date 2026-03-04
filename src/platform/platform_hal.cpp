@@ -106,6 +106,10 @@ uint32_t PlatformHAL::now_ms() {
 // Crypto (STUBS — NOT production crypto)
 // ------------------------------------------------------------
 
+#if defined(RAPS_PRODUCTION_BUILD) && RAPS_PRODUCTION_BUILD == 1
+#error "Stub cryptography must not be used in production builds. Link a real crypto backend."
+#endif
+
 Hash256 PlatformHAL::sha256(const void* data, size_t len) {
     Hash256 h{};
     std::memset(h.data, 0, sizeof(h.data));
