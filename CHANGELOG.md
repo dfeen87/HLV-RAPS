@@ -2,7 +2,7 @@
 
 All notable changes to HLV-RAPS are documented in this file.
 
-## [2.4.0] - 2026-03-04
+## [3.4.0] - 2026-03-04
 
 ### Security
 - Fix division-by-zero in power & resource management when `elapsed_ms == 0`
@@ -28,7 +28,3 @@ All notable changes to HLV-RAPS are documented in this file.
 - Add `CHANGELOG.md`
 - Add `RAPSVersion` namespace constants to `raps_core_types.hpp`
 - Update REST API health endpoint to use `RAPSVersion::STRING`
-
-## [2.3.0] - (previous release)
-
-<!-- placeholder: details for v2.3.0 not available -->
