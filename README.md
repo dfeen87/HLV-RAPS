@@ -339,7 +339,7 @@ HLV-RAPS/
 ├── tools/                          # Development tools
 ├── reference/                      # Reference implementations
 │
-├── LICENSE                         # MIT License
+├── LICENSE                         
 └── README.md                       # This file
 ```
 
@@ -445,7 +445,7 @@ ctest --test-dir build --output-on-failure
 
 ## Contributing
 
-We welcome contributions! This project is MIT licensed and open to:
+We welcome contributions!
 
 - 🔍 **Audits and reviews** — Security, safety, and code quality
 - 🛡️ **Safety envelope expansions** — Additional safety constraints and validation
