@@ -2,7 +2,7 @@
 /*
  * Telemetry sink interface: keeps the core logger decoupled from export mechanisms.
  *
- * License: MIT (see LICENSE)
+ * License: Non-Commercial (see LICENSE)
  */
 
 #include "telemetry_event.hpp"

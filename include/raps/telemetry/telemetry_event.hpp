@@ -3,7 +3,7 @@
  * RAPS Telemetry v2.3
  * Deterministic, bounded, read-only observability events.
  *
- * License: MIT (see LICENSE)
+ * License: Non-Commercial (see LICENSE)
  */
 
 #include <cstdint>

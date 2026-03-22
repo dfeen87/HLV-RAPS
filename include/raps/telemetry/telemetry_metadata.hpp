@@ -13,7 +13,7 @@
  * - Failure to write is acceptable
  * - No blocking in control paths
  *
- * License: MIT (see LICENSE)
+ * License: Non-Commercial (see LICENSE)
  */
 
 #include <cstdio>

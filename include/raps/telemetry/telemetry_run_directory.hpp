@@ -9,7 +9,7 @@
  *   data/telemetry/runs/run_YYYY-MM-DDTHH-MM-SSZ/
  *   data/telemetry/runs/latest -> run_YYYY-MM-DDTHH-MM-SSZ
  *
- * License: MIT
+ * License: Non-Commercial (see LICENSE)
  */
 
 #include <string>

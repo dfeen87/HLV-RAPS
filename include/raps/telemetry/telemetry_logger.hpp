@@ -5,7 +5,7 @@
  * - No allocations in emit() hot path
  * - Best-effort ordering via seq counter
  *
- * License: MIT (see LICENSE)
+ * License: Non-Commercial (see LICENSE)
  */
 
 #include <atomic>

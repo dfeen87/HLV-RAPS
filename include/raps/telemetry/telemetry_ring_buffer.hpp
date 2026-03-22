@@ -8,7 +8,7 @@
  * - minimal contention
  * - acceptable ordering (seq numbers)
  *
- * License: MIT (see LICENSE)
+ * License: Non-Commercial (see LICENSE)
  */
 
 #include <atomic>
