@@ -5,7 +5,7 @@
  * - Easy to parse
  * - Stream-friendly
  *
- * License: MIT (see LICENSE)
+ * License: Non-Commercial (see LICENSE)
  */
 
 #include <cstdio>
