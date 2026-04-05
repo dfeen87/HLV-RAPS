@@ -55,6 +55,7 @@ HIL emphasizes:
 
 SIL and HIL differ **only** at the hardware abstraction boundary:
 
+```
         +---------------------+
         |   Core Processing   |
         |   Policy Evaluation |
@@ -65,8 +66,9 @@ SIL and HIL differ **only** at the hardware abstraction boundary:
                    |
     +--------------+--------------+
     |                             |
-Reference Backend Real Backend
-(SIL) (HIL)
+Reference Backend          Real Backend
+    (SIL)                      (HIL)
+```
 
 
 This guarantees that:
