@@ -1,3 +1,4 @@
+# System Architecture
 
 Cross-cutting layers:
 
@@ -150,5 +151,5 @@ No code paths are exclusive to SIL or HIL.
 
 ## 8. Time and Type Consistency
 
-All timing and common scalar types are centralized in:
+All timing and common scalar types are centralized in `src/common/types.hpp`.
 

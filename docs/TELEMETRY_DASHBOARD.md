@@ -1,4 +1,4 @@
-# RAPS Telemetry & Dashboard (v2.3)
+# RAPS Telemetry & Dashboard (v3.2)
 
 This document defines the **read-only observability layer** for RAPS.
 
@@ -77,9 +77,9 @@ Use `tools/telemetry_report.cpp` to generate a lightweight summary report:
 ./telemetry_report raps.telemetry.jsonl
 ```
 
-This is the default v2.3 "dashboard": simple, deterministic, portable.
+This is the default v3.2 "dashboard": simple, deterministic, portable.
 
-Future v2.4+ may add a richer HTML visualization, but only after trust is earned.
+Future v3.3+ may add a richer HTML visualization, but only after trust is earned.
 
 ---
 
@@ -91,7 +91,7 @@ Future v2.4+ may add a richer HTML visualization, but only after trust is earned
 
 ---
 
-# RAPS v2.3.0 — Telemetry & Observability Layer
+# RAPS v3.2.0 — Telemetry & Observability Layer
 
 This release introduces a **production-hardened, read-only telemetry layer** for RAPS.
 

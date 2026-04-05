@@ -24,7 +24,7 @@ All notable changes to HLV-RAPS are documented in this file.
 - Fix broken include paths in `advanced_propulsion_control_unit.hpp`
 
 ### Maintainability
-- Add `VERSION` file (`2.4.0`)
+- Add `VERSION` file (`3.2.0`)
 - Add `CHANGELOG.md`
 - Add `RAPSVersion` namespace constants to `raps_core_types.hpp`
 - Update REST API health endpoint to use `RAPSVersion::STRING`

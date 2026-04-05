@@ -275,20 +275,20 @@ ctest --test-dir build --output-on-failure
 
 ### Running the RTOS Demo
 
-```bash
-# Build and run the RTOS demonstration
-# (Adjust toolchain/platform as needed for your target)
-./build/hlv_rtos_demo
-```
+The RTOS demonstration (`examples/hlv_demo/hlv_rtos_demo.cpp`) is a reference integration example for embedded/RTOS targets. Building it requires a platform-specific toolchain; there is no standalone CMake target provided. Refer to the source file for integration guidance.
 
 ### Running the REST API Server
 
 ```bash
 # Build and run the API server demo
-./build/rest_api_demo
+cmake -S examples/api_client -B build/api_demo
+cmake --build build/api_demo
+
+# In one terminal, start the server
+./build/api_demo/rest_api_demo
 
 # In another terminal, access the API
-curl http://localhost:8080/api/status
+curl http://localhost:8080/health
 ```
 
 📖 **For detailed build instructions**, see the repository documentation in `docs/`.

@@ -235,7 +235,7 @@ Before deployment, verify:
 
 This contract is versioned and maintained alongside RAPS releases.
 
-**Current version**: 1.0 (RAPS v2.3.0)
+**Current version**: 1.0 (RAPS v3.2.0)
 
 **Change policy**:
 - Breaking changes require major version bump
@@ -243,6 +243,6 @@ This contract is versioned and maintained alongside RAPS releases.
 - Deprecations announced one release in advance
 
 For questions or clarifications, refer to:
-- `docs/telemetry_dashboard_v2.3.md`
+- `docs/TELEMETRY_DASHBOARD.md`
 - `data/telemetry/README.md`
 - `src/telemetry/telemetry_run_dir.hpp`
