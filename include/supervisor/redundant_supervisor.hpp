@@ -9,7 +9,7 @@ public:
         CRITICAL_ROLLBACK_FAIL,
         CRITICAL_NO_ROLLBACK,
         PRIMARY_CHANNEL_LOCKUP,
-        MISMATED_PREDICTION
+        MISMATCHED_PREDICTION
     };
 
     void init();
