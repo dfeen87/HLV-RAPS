@@ -133,8 +133,8 @@ struct RollbackPlan {
 // =====================================================
 
 namespace RAPSVersion {
-    constexpr uint32_t MAJOR = 2;
-    constexpr uint32_t MINOR = 4;
+    constexpr uint32_t MAJOR = 3;
+    constexpr uint32_t MINOR = 3;
     constexpr uint32_t PATCH = 0;
-    constexpr const char* STRING = "2.4.0";
+    constexpr const char* STRING = "3.3.0";
 }
