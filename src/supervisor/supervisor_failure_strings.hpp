@@ -10,8 +10,8 @@ inline const char* supervisor_failure_reason_string(
             return "CRITICAL_NO_ROLLBACK";
         case RedundantSupervisor::FailureMode::PRIMARY_CHANNEL_LOCKUP:
             return "PRIMARY_CHANNEL_LOCKUP";
-        case RedundantSupervisor::FailureMode::MISMATED_PREDICTION:
-            return "MISMATED_PREDICTION";
+        case RedundantSupervisor::FailureMode::MISMATCHED_PREDICTION:
+            return "MISMATCHED_PREDICTION";
         default:
             return "UNKNOWN";
     }
