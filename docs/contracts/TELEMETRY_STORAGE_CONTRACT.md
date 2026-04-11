@@ -235,7 +235,7 @@ Before deployment, verify:
 
 This contract is versioned and maintained alongside RAPS releases.
 
-**Current version**: 1.0 (RAPS v3.2.0)
+**Current version**: 1.0 (RAPS v3.3.0)
 
 **Change policy**:
 - Breaking changes require major version bump

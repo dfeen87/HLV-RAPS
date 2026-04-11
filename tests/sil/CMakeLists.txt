@@ -129,3 +129,37 @@ add_test(
     NAME raps_sil_rollback_test
     COMMAND raps_sil_rollback_tests
 )
+
+# ------------------------------------------------------------
+# Version Tests
+# ------------------------------------------------------------
+add_executable(raps_sil_version_tests
+    test_version.cpp
+)
+
+target_include_directories(raps_sil_version_tests PRIVATE
+    ${PROJECT_SOURCE_DIR}/../../include
+    ${PROJECT_SOURCE_DIR}/../../src
+)
+
+add_test(
+    NAME raps_sil_version_test
+    COMMAND raps_sil_version_tests
+)
+
+# ------------------------------------------------------------
+# Stability Indicator Tests
+# ------------------------------------------------------------
+add_executable(raps_sil_stability_tests
+    test_stability_indicator.cpp
+)
+
+target_include_directories(raps_sil_stability_tests PRIVATE
+    ${PROJECT_SOURCE_DIR}/../../include
+    ${PROJECT_SOURCE_DIR}/../../src
+)
+
+add_test(
+    NAME raps_sil_stability_test
+    COMMAND raps_sil_stability_tests
+)

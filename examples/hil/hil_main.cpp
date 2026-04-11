@@ -123,7 +123,7 @@ int main() {
         telemetry_sink.open((run_dir + "/telemetry.jsonl").c_str());
 
         raps::telemetry::TelemetryMetadata meta;
-        meta.raps_version     = "2.3.0";
+        meta.raps_version     = "3.3.0";
         meta.telemetry_schema = "1.0";
         meta.build_type       = "HIL";
         meta.notes            = "HIL loopback bring-up";

@@ -83,7 +83,7 @@ inline void json_escape(FILE* f, const char* s) noexcept {
 // All fields are optional; empty strings are omitted.
 //
 struct TelemetryMetadata final {
-    std::string raps_version;        // e.g. "2.3.0"
+    std::string raps_version;        // e.g. "3.3.0"
     std::string telemetry_schema;    // e.g. "1.0"
     std::string git_commit;          // optional
     std::string build_type;          // Debug / Release

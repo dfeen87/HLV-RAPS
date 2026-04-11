@@ -91,7 +91,7 @@ Future v3.3+ may add a richer HTML visualization, but only after trust is earned
 
 ---
 
-# RAPS v3.2.0 — Telemetry & Observability Layer
+# RAPS v3.3.0 — Telemetry & Observability Layer
 
 This release introduces a **production-hardened, read-only telemetry layer** for RAPS.
 
