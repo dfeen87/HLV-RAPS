@@ -4,6 +4,7 @@
 
 **Advanced Safety & Predictive Intelligence Layer for Flight-Ready Systems**
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![CI](https://github.com/dfeen87/HLV-RAPS/actions/workflows/ci.yml/badge.svg)](https://github.com/dfeen87/HLV-RAPS/actions/workflows/ci.yml)
 [![C++](https://img.shields.io/badge/C%2B%2B-17-blue.svg)](https://isocpp.org/)
 [![CMake](https://img.shields.io/badge/CMake-3.10+-064F8C.svg)](https://cmake.org/)
