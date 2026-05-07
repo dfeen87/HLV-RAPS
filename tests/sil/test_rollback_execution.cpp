@@ -67,12 +67,21 @@ void test_rollback_validation() {
     bool res3 = execute_rollback_plan(plan, tx_id);
     expect_false(res3, "execute_rollback_plan fails for infinite gimbal");
 
-    // 4. Valid plan
+    // 4. Non-finite thrust
+    plan.valid = true;
+    plan.thrust_magnitude_kN = std::numeric_limits<float>::quiet_NaN();
+    plan.gimbal_theta_rad = 0.1f;
+    plan.gimbal_phi_rad = 0.0f;
+    bool res4 = execute_rollback_plan(plan, tx_id);
+    expect_false(res4, "execute_rollback_plan fails for non-finite thrust");
+
+    // 5. Valid plan
     plan.valid = true;
     plan.thrust_magnitude_kN = 50.0f;
     plan.gimbal_theta_rad = 0.1f;
-    bool res4 = execute_rollback_plan(plan, tx_id);
-    expect_true(res4, "execute_rollback_plan succeeds for valid inputs");
+    plan.gimbal_phi_rad = 0.0f;
+    bool res5 = execute_rollback_plan(plan, tx_id);
+    expect_true(res5, "execute_rollback_plan succeeds for valid inputs");
     expect_true(tx_id.length() > 0, "tx_id is generated");
 }
 
@@ -94,7 +103,7 @@ void test_wnn_rollback_hardening() {
     );
 
     // 2. Empty rollback store must fail safely
-    RollbackPlan store[1]{};
+    RollbackPlan store[RAPSConfig::MAX_ROLLBACK_STORE]{};
     bool empty_store_result = trigger_wnn_immediate_rollback(
         store,
         0,
@@ -103,6 +112,17 @@ void test_wnn_rollback_hardening() {
     expect_false(
         empty_store_result,
         "trigger_wnn_immediate_rollback fails safely for empty rollback store"
+    );
+
+    // 3. Out-of-range rollback count must fail before indexing the store
+    bool oob_count_result = trigger_wnn_immediate_rollback(
+        store,
+        static_cast<uint32_t>(RAPSConfig::MAX_ROLLBACK_STORE + 1U),
+        active_state
+    );
+    expect_false(
+        oob_count_result,
+        "trigger_wnn_immediate_rollback fails safely for out-of-range rollback count"
     );
 }
 
