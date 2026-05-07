@@ -4,6 +4,9 @@
 #include <iostream>
 #include <limits>
 
+#include "raps/rollback_execution.hpp"
+#include "itl/itl_manager.hpp"
+
 // =====================================================
 // Deterministic Safety Monitor (DSM)
 // =====================================================
@@ -25,7 +28,16 @@ constexpr double MAX_TCC_COUPLING_J = 1.0e+04;
 // Failsafe parameters
 constexpr double MIN_RESONANCE_AMPLITUDE_CUTOFF = 0.10;
 
+// WNN Constraints
+constexpr double WNN_MAX_CURVATURE_PROXY = 5.0e-11;
+constexpr double WNN_MIN_OSCILLATORY_PREFACTOR = 0.85;
+
 } // namespace DSM_Config
+
+struct WnnTelemetry {
+    double curvature_proxy;
+    double oscillatory_prefactor;
+};
 
 // =====================================================
 // DSM Sensor Inputs (Independent Channels)
@@ -54,6 +66,14 @@ public:
     DeterministicSafetyMonitor();
 
     int evaluateSafety(const DsmSensorInputs& inputs);
+
+    bool pollWnnAndEnforce(
+        const WnnTelemetry& wnn_telem,
+        ITLManager& itl_manager,
+        const RollbackPlan* rollback_store,
+        uint32_t rollback_count,
+        PhysicsState& active_state_pointer
+    );
 
 private:
     double last_estimated_Rmax_;
@@ -163,4 +183,27 @@ DeterministicSafetyMonitor::evaluateSafety(
     }
 
     return ACTION_NONE;
+}
+
+inline bool
+DeterministicSafetyMonitor::pollWnnAndEnforce(
+    const WnnTelemetry& wnn_telem,
+    ITLManager& itl_manager,
+    const RollbackPlan* rollback_store,
+    uint32_t rollback_count,
+    PhysicsState& active_state_pointer
+) {
+    if (wnn_telem.curvature_proxy > DSM_Config::WNN_MAX_CURVATURE_PROXY ||
+        wnn_telem.oscillatory_prefactor < DSM_Config::WNN_MIN_OSCILLATORY_PREFACTOR) {
+
+        // Breach detected! Log to ITL and execute immediate rollback
+        itl_manager.log_wnn_rollback_event(wnn_telem.curvature_proxy, wnn_telem.oscillatory_prefactor);
+
+        return trigger_wnn_immediate_rollback(
+            rollback_store,
+            rollback_count,
+            active_state_pointer
+        );
+    }
+    return false; // No breach
 }

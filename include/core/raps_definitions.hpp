@@ -106,6 +106,11 @@ struct ITLEntry {
         AileeStatus status;
     };
 
+    struct WnnAlertPayload {
+        double curvature_proxy;
+        double oscillatory_prefactor;
+    };
+
     // --- Union Payload Container ---
 
     union PayloadData {
@@ -123,6 +128,7 @@ struct ITLEntry {
         AileeSafetyStatusPayload ailee_safety_status;
         AileeGraceResultPayload ailee_grace_result;
         AileeConsensusResultPayload ailee_consensus_result;
+        WnnAlertPayload wnn_alert;
     };
 
     // --- Entry Type ---
@@ -144,7 +150,8 @@ struct ITLEntry {
         SUPERVISOR_EXCEPTION,
         AILEE_SAFETY_STATUS,
         AILEE_GRACE_RESULT,
-        AILEE_CONSENSUS_RESULT
+        AILEE_CONSENSUS_RESULT,
+        WNN_ALERT
     };
 
     // --- ITL Entry Header ---

@@ -3,6 +3,16 @@
 #include <optional>
 #include <cstring>
 
+#include "raps/telemetry/telemetry_ring_buffer.hpp"
+#include "itl/itl_state_snapshot.hpp"
+
+// Continuous, statically allocated snapshot buffer
+inline raps::telemetry::TelemetryRingBuffer<PhysicsState, 64> StateSnapshotBuffer;
+
+inline void store_state_snapshot_tick(const PhysicsState& state) {
+    StateSnapshotBuffer.try_push(state);
+}
+
 inline void store_rollback_plan(
     RollbackPlan* rollback_store,
     uint32_t& rollback_count,
