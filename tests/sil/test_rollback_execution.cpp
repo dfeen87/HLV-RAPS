@@ -76,6 +76,36 @@ void test_rollback_validation() {
     expect_true(tx_id.length() > 0, "tx_id is generated");
 }
 
+void test_wnn_rollback_hardening() {
+    std::cout << "--- Testing WNN Rollback Hardening ---\n";
+
+    PhysicsState active_state{};
+    active_state.timestamp_ms = 10;
+
+    // 1. Null rollback store with non-zero count must fail safely
+    bool null_store_result = trigger_wnn_immediate_rollback(
+        nullptr,
+        1,
+        active_state
+    );
+    expect_false(
+        null_store_result,
+        "trigger_wnn_immediate_rollback fails safely for null rollback store"
+    );
+
+    // 2. Empty rollback store must fail safely
+    RollbackPlan store[1]{};
+    bool empty_store_result = trigger_wnn_immediate_rollback(
+        store,
+        0,
+        active_state
+    );
+    expect_false(
+        empty_store_result,
+        "trigger_wnn_immediate_rollback fails safely for empty rollback store"
+    );
+}
+
 int main() {
     std::cout << "========================================================\n";
     std::cout << " SIL TEST: Rollback Execution Logic\n";
@@ -85,6 +115,7 @@ int main() {
     PlatformHAL::seed_rng_for_stubs(12345);
 
     test_rollback_validation();
+    test_wnn_rollback_hardening();
 
     std::cout << "--------------------------------------------------------\n";
     if (g_failures == 0) {

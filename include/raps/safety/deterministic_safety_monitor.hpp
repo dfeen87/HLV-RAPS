@@ -80,6 +80,8 @@ private:
     bool safing_sequence_active_;
 
     bool hasInvalidInputs(const DsmSensorInputs& inputs) const;
+    bool hasInvalidWnnTelemetry(const WnnTelemetry& wnn_telem) const;
+    bool isWnnThresholdBreached(const WnnTelemetry& wnn_telem) const;
     bool checkResonanceStability(double A_t, double J_coupling) const;
     double estimateCurvatureScalar(double dilation) const;
     bool checkCurvatureViolation(double R_estimated) const;
@@ -118,6 +120,22 @@ DeterministicSafetyMonitor::hasInvalidInputs(
         !std::isfinite(inputs.measured_oscillatory_prefactor_A_t) ||
         !std::isfinite(inputs.measured_tcc_coupling_J) ||
         !std::isfinite(inputs.current_resonance_amplitude);
+}
+
+inline bool
+DeterministicSafetyMonitor::hasInvalidWnnTelemetry(
+    const WnnTelemetry& wnn_telem
+) const {
+    return !std::isfinite(wnn_telem.curvature_proxy) ||
+        !std::isfinite(wnn_telem.oscillatory_prefactor);
+}
+
+inline bool
+DeterministicSafetyMonitor::isWnnThresholdBreached(
+    const WnnTelemetry& wnn_telem
+) const {
+    return wnn_telem.curvature_proxy > DSM_Config::WNN_MAX_CURVATURE_PROXY ||
+        wnn_telem.oscillatory_prefactor < DSM_Config::WNN_MIN_OSCILLATORY_PREFACTOR;
 }
 
 inline bool
@@ -193,11 +211,29 @@ DeterministicSafetyMonitor::pollWnnAndEnforce(
     uint32_t rollback_count,
     PhysicsState& active_state_pointer
 ) {
-    if (wnn_telem.curvature_proxy > DSM_Config::WNN_MAX_CURVATURE_PROXY ||
-        wnn_telem.oscillatory_prefactor < DSM_Config::WNN_MIN_OSCILLATORY_PREFACTOR) {
+    const bool invalid_wnn_input = hasInvalidWnnTelemetry(wnn_telem);
+    const bool threshold_breach = isWnnThresholdBreached(wnn_telem);
+
+    if (invalid_wnn_input || threshold_breach) {
+        safing_sequence_active_ = true;
+        if (invalid_wnn_input) {
+            std::cerr << "DSM ALERT: Non-finite WNN telemetry detected — ROLLBACK\n";
+        }
+
+        const double logged_curvature = std::isfinite(wnn_telem.curvature_proxy)
+            ? wnn_telem.curvature_proxy
+            : 0.0;
+        const double logged_prefactor = std::isfinite(wnn_telem.oscillatory_prefactor)
+            ? wnn_telem.oscillatory_prefactor
+            : 0.0;
 
         // Breach detected! Log to ITL and execute immediate rollback
-        itl_manager.log_wnn_rollback_event(wnn_telem.curvature_proxy, wnn_telem.oscillatory_prefactor);
+        itl_manager.log_wnn_rollback_event(logged_curvature, logged_prefactor);
+
+        if (rollback_count > 0 && rollback_store == nullptr) {
+            std::cerr << "DSM ALERT: rollback store unavailable during WNN safing\n";
+            return false;
+        }
 
         return trigger_wnn_immediate_rollback(
             rollback_store,

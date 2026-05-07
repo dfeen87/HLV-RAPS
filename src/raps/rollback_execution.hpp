@@ -53,7 +53,7 @@ inline bool trigger_wnn_immediate_rollback(
     uint32_t rollback_count,
     PhysicsState& active_state_pointer
 ) {
-    if (rollback_count == 0) {
+    if (rollback_count == 0 || rollback_store == nullptr) {
         return false;
     }
 
