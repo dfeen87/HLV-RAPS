@@ -49,6 +49,9 @@ inline size_t itl_effective_payload_len(
         case ITLEntry::Type::AILEE_CONSENSUS_RESULT:
             return sizeof(ITLEntry::AileeConsensusResultPayload);
 
+        case ITLEntry::Type::WNN_ALERT:
+            return sizeof(ITLEntry::WnnAlertPayload);
+
         default:
             return 0;
     }

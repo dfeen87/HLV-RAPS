@@ -6,6 +6,7 @@
 
 #include "raps/core/raps_core_types.hpp"
 #include "platform/platform_hal.hpp"
+#include "safety/rollback_store.hpp"
 
 // Executes a rollback plan via the actuator interface.
 // Returns true if execution succeeded.
@@ -44,4 +45,31 @@ inline bool execute_rollback_plan(
         rollback.gimbal_theta_rad,
         RAPSConfig::WATCHDOG_MS / 4
     );
+}
+
+// Triggers an immediate rollback due to WNN constraints breach
+inline bool trigger_wnn_immediate_rollback(
+    const RollbackPlan* rollback_store,
+    uint32_t rollback_count,
+    PhysicsState& active_state_pointer
+) {
+    if (rollback_count == 0) {
+        return false;
+    }
+
+    const RollbackPlan& latest_plan = rollback_store[rollback_count - 1];
+
+    std::string tx_id;
+    if (!execute_rollback_plan(latest_plan, tx_id)) {
+        return false;
+    }
+
+    // Peek the latest snapshot without destructive reading
+    PhysicsState last_valid_snapshot;
+    if (StateSnapshotBuffer.try_peek_latest(last_valid_snapshot)) {
+        // Point the active state pointer to the last valid state
+        active_state_pointer = last_valid_snapshot;
+    }
+
+    return true;
 }

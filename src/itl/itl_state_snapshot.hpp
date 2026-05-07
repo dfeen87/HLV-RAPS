@@ -1,5 +1,7 @@
 #pragma once
 
+#include "itl/itl_manager.hpp"
+
 inline void commit_state_snapshot(
     ITLManager& itl_manager,
     const PhysicsState& current_state) {

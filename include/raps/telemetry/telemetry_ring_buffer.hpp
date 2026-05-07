@@ -43,6 +43,18 @@ public:
     return true;
   }
 
+  // Peek the latest written item without popping.
+  bool try_peek_latest(T& out) const noexcept {
+    const uint64_t w = _write_idx.load(std::memory_order_acquire);
+    const uint64_t r = _read_idx.load(std::memory_order_relaxed);
+
+    if (r == w) return false;
+
+    // The most recent valid write is at w - 1
+    out = _data[(w - 1) & (CapacityPow2 - 1)];
+    return true;
+  }
+
   // Pop one item if available.
   bool try_pop(T& out) noexcept {
     const uint64_t r = _read_idx.load(std::memory_order_relaxed);
