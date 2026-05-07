@@ -218,22 +218,19 @@ DeterministicSafetyMonitor::pollWnnAndEnforce(
         safing_sequence_active_ = true;
         if (invalid_wnn_input) {
             std::cerr << "DSM ALERT: Non-finite WNN telemetry detected — ROLLBACK\n";
+        } else {
+            std::cerr << "DSM ALERT: WNN thresholds exceeded — ROLLBACK\n";
         }
 
         const double logged_curvature = std::isfinite(wnn_telem.curvature_proxy)
             ? wnn_telem.curvature_proxy
-            : 0.0;
+            : -1.0;
         const double logged_prefactor = std::isfinite(wnn_telem.oscillatory_prefactor)
             ? wnn_telem.oscillatory_prefactor
-            : 0.0;
+            : -1.0;
 
         // Breach detected! Log to ITL and execute immediate rollback
         itl_manager.log_wnn_rollback_event(logged_curvature, logged_prefactor);
-
-        if (rollback_count > 0 && rollback_store == nullptr) {
-            std::cerr << "DSM ALERT: rollback store unavailable during WNN safing\n";
-            return false;
-        }
 
         return trigger_wnn_immediate_rollback(
             rollback_store,
