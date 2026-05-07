@@ -163,3 +163,32 @@ add_test(
     NAME raps_sil_stability_test
     COMMAND raps_sil_stability_tests
 )
+
+# ------------------------------------------------------------
+# DSM WNN Enforcement Tests
+# ------------------------------------------------------------
+add_executable(raps_sil_dsm_wnn_tests
+    test_dsm_wnn.cpp
+    ../../src/platform/platform_hal.cpp
+)
+
+target_include_directories(raps_sil_dsm_wnn_tests PRIVATE
+    ${PROJECT_SOURCE_DIR}/../../include
+    ${PROJECT_SOURCE_DIR}/../../src
+)
+
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    target_compile_options(raps_sil_dsm_wnn_tests PRIVATE
+        -Wall
+        -Wextra
+        -Wpedantic
+        -Wshadow
+        -Wconversion
+        -Wno-unused-parameter
+    )
+endif()
+
+add_test(
+    NAME raps_sil_dsm_wnn_test
+    COMMAND raps_sil_dsm_wnn_tests
+)

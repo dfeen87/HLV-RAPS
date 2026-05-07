@@ -3,6 +3,7 @@
 #include <string>
 #include <cmath>
 #include <limits>
+#include <cstdint>
 
 #include "raps/core/raps_core_types.hpp"
 #include "platform/platform_hal.hpp"
@@ -20,12 +21,13 @@ inline bool execute_rollback_plan(
     }
 
     // 2. Validate control inputs (Sanity Checks)
-    // Thrust cannot be negative
-    if (rollback.thrust_magnitude_kN < 0.0f) {
+    // Thrust must be finite and cannot be negative.
+    if (!std::isfinite(rollback.thrust_magnitude_kN) ||
+        rollback.thrust_magnitude_kN < 0.0f) {
         return false;
     }
 
-    // Gimbal angles must be finite numbers
+    // Gimbal angles must be finite numbers.
     if (!std::isfinite(rollback.gimbal_theta_rad)) {
         return false;
     }
@@ -53,14 +55,30 @@ inline bool trigger_wnn_immediate_rollback(
     uint32_t rollback_count,
     PhysicsState& active_state_pointer
 ) {
-    if (rollback_count == 0 || rollback_store == nullptr) {
+    if (rollback_count == 0U || rollback_store == nullptr) {
         return false;
     }
 
-    const RollbackPlan& latest_plan = rollback_store[rollback_count - 1];
+    if (rollback_count > RAPSConfig::MAX_ROLLBACK_STORE) {
+        PlatformHAL::metric_emit(
+            "safety.wnn.rollback_rejected",
+            1.0f,
+            "reason",
+            "rollback_count_oob"
+        );
+        return false;
+    }
+
+    const RollbackPlan& latest_plan = rollback_store[rollback_count - 1U];
 
     std::string tx_id;
     if (!execute_rollback_plan(latest_plan, tx_id)) {
+        PlatformHAL::metric_emit(
+            "safety.wnn.rollback_rejected",
+            1.0f,
+            "reason",
+            "plan_execution_failed"
+        );
         return false;
     }
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include <cstdint>
 #include <iostream>
 #include <limits>
 
@@ -31,13 +32,15 @@ constexpr double MIN_RESONANCE_AMPLITUDE_CUTOFF = 0.10;
 // WNN Constraints
 constexpr double WNN_MAX_CURVATURE_PROXY = 5.0e-11;
 constexpr double WNN_MIN_OSCILLATORY_PREFACTOR = 0.85;
+constexpr double WNN_MAX_OSCILLATORY_PREFACTOR = 1.25;
 constexpr double INVALID_TELEMETRY_SENTINEL = -1.0;
 
 } // namespace DSM_Config
 
 struct WnnTelemetry {
-    double curvature_proxy;
-    double oscillatory_prefactor;
+    double curvature_proxy{0.0};
+    double oscillatory_prefactor{1.0};
+    uint32_t timestamp_ms{0U};
 };
 
 // =====================================================
@@ -128,15 +131,18 @@ DeterministicSafetyMonitor::hasInvalidWnnTelemetry(
     const WnnTelemetry& wnn_telem
 ) const {
     return !std::isfinite(wnn_telem.curvature_proxy) ||
-        !std::isfinite(wnn_telem.oscillatory_prefactor);
+        !std::isfinite(wnn_telem.oscillatory_prefactor) ||
+        wnn_telem.curvature_proxy < 0.0 ||
+        wnn_telem.oscillatory_prefactor < 0.0;
 }
 
 inline bool
 DeterministicSafetyMonitor::isWnnThresholdBreached(
     const WnnTelemetry& wnn_telem
 ) const {
-    return wnn_telem.curvature_proxy > DSM_Config::WNN_MAX_CURVATURE_PROXY ||
-        wnn_telem.oscillatory_prefactor < DSM_Config::WNN_MIN_OSCILLATORY_PREFACTOR;
+    return wnn_telem.curvature_proxy >= DSM_Config::WNN_MAX_CURVATURE_PROXY ||
+        wnn_telem.oscillatory_prefactor <= DSM_Config::WNN_MIN_OSCILLATORY_PREFACTOR ||
+        wnn_telem.oscillatory_prefactor >= DSM_Config::WNN_MAX_OSCILLATORY_PREFACTOR;
 }
 
 inline bool
@@ -169,10 +175,11 @@ DeterministicSafetyMonitor::evaluateSafety(
         return ACTION_FULL_SHUTDOWN;
     }
 
-    double R_estimated =
+    const double R_estimated =
         estimateCurvatureScalar(inputs.measured_proper_time_dilation);
+    last_estimated_Rmax_ = R_estimated;
 
-    if (checkCurvatureViolation(R_estimated)) {
+    if (!std::isfinite(R_estimated) || checkCurvatureViolation(R_estimated)) {
         safing_sequence_active_ = true;
         std::cerr
             << "DSM ALERT: ABSOLUTE CURVATURE VIOLATION — FULL SHUTDOWN\n";
@@ -231,14 +238,26 @@ DeterministicSafetyMonitor::pollWnnAndEnforce(
             ? wnn_telem.oscillatory_prefactor
             : DSM_Config::INVALID_TELEMETRY_SENTINEL;
 
-        // Breach detected! Log to ITL and execute immediate rollback
-        itl_manager.log_wnn_rollback_event(logged_curvature, logged_prefactor);
+        // Breach detected! Log to ITL and execute immediate rollback.
+        const bool ledger_committed =
+            itl_manager.log_wnn_rollback_event(logged_curvature, logged_prefactor);
+        if (!ledger_committed) {
+            PlatformHAL::metric_emit(
+                "safety.wnn.ledger_commit_failed",
+                1.0f
+            );
+        }
 
-        return trigger_wnn_immediate_rollback(
+        const bool rollback_executed = trigger_wnn_immediate_rollback(
             rollback_store,
             rollback_count,
             active_state_pointer
         );
+        PlatformHAL::metric_emit(
+            "safety.wnn.rollback_executed",
+            rollback_executed ? 1.0f : 0.0f
+        );
+        return rollback_executed;
     }
     return false; // No breach
 }
