@@ -31,6 +31,7 @@ constexpr double MIN_RESONANCE_AMPLITUDE_CUTOFF = 0.10;
 // WNN Constraints
 constexpr double WNN_MAX_CURVATURE_PROXY = 5.0e-11;
 constexpr double WNN_MIN_OSCILLATORY_PREFACTOR = 0.85;
+constexpr double INVALID_TELEMETRY_SENTINEL = -1.0;
 
 } // namespace DSM_Config
 
@@ -215,6 +216,7 @@ DeterministicSafetyMonitor::pollWnnAndEnforce(
     const bool threshold_breach = isWnnThresholdBreached(wnn_telem);
 
     if (invalid_wnn_input || threshold_breach) {
+        // Keep safing active until the broader control loop restores margins.
         safing_sequence_active_ = true;
         if (invalid_wnn_input) {
             std::cerr << "DSM ALERT: Non-finite WNN telemetry detected — ROLLBACK\n";
@@ -224,10 +226,10 @@ DeterministicSafetyMonitor::pollWnnAndEnforce(
 
         const double logged_curvature = std::isfinite(wnn_telem.curvature_proxy)
             ? wnn_telem.curvature_proxy
-            : -1.0;
+            : DSM_Config::INVALID_TELEMETRY_SENTINEL;
         const double logged_prefactor = std::isfinite(wnn_telem.oscillatory_prefactor)
             ? wnn_telem.oscillatory_prefactor
-            : -1.0;
+            : DSM_Config::INVALID_TELEMETRY_SENTINEL;
 
         // Breach detected! Log to ITL and execute immediate rollback
         itl_manager.log_wnn_rollback_event(logged_curvature, logged_prefactor);
